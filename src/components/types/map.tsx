@@ -8,3 +8,9 @@ export interface WaterMeter {
   y: number; // percent
   id: string;
 }
+
+export interface WaterSupply {
+  x: number; // percent
+  y: number; // percent
+  id: string;
+}

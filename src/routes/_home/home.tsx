@@ -11,13 +11,11 @@ export function home() {
   const [isModify, setIsModify] = useState(false);
   return (
     <>
-      <main className="h-screen mb-4">
-        <div
-          className={`!m-0 max-w-full container relative flex h-screen px-0 py-2`}
-        >
-          <Card className="flex h-full w-full flex-col border-0 shadow-none">
+      <main className="h-screen">
+        <div className={`!m-0 max-w-full container relative flex h-screen`}>
+          <Card className="flex h-full w-full flex-col border-0 shadow-none py-2 ">
             <CardHeader className="flex justify-center px-2">
-              <CardTitle>SCADA-V</CardTitle>
+              {/*  <CardTitle>SCADA-V</CardTitle> */}
             </CardHeader>
             <CardContent className="relativepx-2 pb-0">
               <Button
@@ -29,8 +27,8 @@ export function home() {
                 Modify
               </Button>
             </CardContent>
-            <CardContent className="relative h-full px-2 pb-0">
-              <div className="h-full overflow-hidden border">
+            <CardContent className="relative h-screen w-full px-2">
+              <div className="h-full w-full overflow-hidden border">
                 <SCADAMap isModify={isModify} />
               </div>
             </CardContent>

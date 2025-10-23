@@ -71,14 +71,16 @@ export const handleMouseUp = (
 /* Handle Grid Lines */
 export function drawGrid(
   svg: d3.Selection<SVGSVGElement, unknown, null, undefined>,
-  dimensions: Dimensions
+  dimensions: Dimensions,
+  isModify?: boolean
 ) {
   const { width: w, height: h } = dimensions;
 
-  // Remove previous grid
-  svg.selectAll(".grid-lines").remove();
-
   const gridGroup = svg.append("g").attr("class", "grid-lines");
+
+  const mainGridLineWidth = isModify ? 1 : 0.7;
+  const mainGridLineColor = `#cccccc3f`; //isModify ? `#ccc` : `#cccccc3f`;
+  const subGridLineColor = `#e9e9e955`; //isModify ? `#e9e9e9` : `#e9e9e955`;
 
   // Subgrid (1% intervals, skip 10%)
   for (let i = 1; i <= 100; i += 1) {
@@ -92,7 +94,7 @@ export function drawGrid(
         .attr("y1", 0)
         .attr("x2", x)
         .attr("y2", h)
-        .attr("stroke", "#e9e9e9")
+        .attr("stroke", `${subGridLineColor}`)
         .attr("stroke-width", 0.5);
 
       gridGroup
@@ -101,7 +103,7 @@ export function drawGrid(
         .attr("y1", y)
         .attr("x2", w)
         .attr("y2", y)
-        .attr("stroke", "#e9e9e9")
+        .attr("stroke", `${subGridLineColor}`)
         .attr("stroke-width", 0.5);
     }
   }
@@ -117,8 +119,8 @@ export function drawGrid(
       .attr("y1", 0)
       .attr("x2", x)
       .attr("y2", h)
-      .attr("stroke", "#ccc")
-      .attr("stroke-width", 1);
+      .attr("stroke", `${mainGridLineColor}`)
+      .attr("stroke-width", mainGridLineWidth);
 
     gridGroup
       .append("line")
@@ -126,8 +128,8 @@ export function drawGrid(
       .attr("y1", y)
       .attr("x2", w)
       .attr("y2", y)
-      .attr("stroke", "#ccc")
-      .attr("stroke-width", 1);
+      .attr("stroke", `${mainGridLineColor}`)
+      .attr("stroke-width", mainGridLineWidth);
 
     gridGroup
       .append("text")
