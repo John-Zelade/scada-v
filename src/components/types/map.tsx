@@ -3,14 +3,32 @@ export type Dimensions = {
   height: number;
 };
 
-export interface WaterMeter {
-  x: number; // percent
-  y: number; // percent
+export interface PipePoint {
+  x: number;
+  y: number;
+}
+
+export type PipePointDatum = {
   id: string;
+  point: { x: number; y: number; linkedMeterId?: string };
+};
+
+export interface Pipes {
+  id: string;
+  points: { x: number; y: number }[];
+}
+
+export interface WaterMeter {
+  id: string;
+  points: { x: number; y: number }[];
 }
 
 export interface WaterSupply {
-  x: number; // percent
-  y: number; // percent
   id: string;
+  points: { x: number; y: number }[];
 }
+
+export type SelectedComponent = {
+  id: string;
+  type: "water-supply" | "water-meter" | "pipe"; // extend if more types later
+};

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import type { SelectedComponent, WaterMeter, WaterSupply } from "../types/map";
 import * as d3 from "d3";
 
 interface PanelPos {
@@ -76,7 +77,8 @@ export function drawGrid(
 ) {
   const { width: w, height: h } = dimensions;
 
-  const gridGroup = svg.append("g").attr("class", "grid-lines");
+  const gridGroup = svg.select(".grid-layer");
+  gridGroup.selectAll("*").remove(); // clear old grid
 
   const mainGridLineWidth = isModify ? 1 : 0.7;
   const mainGridLineColor = `#cccccc3f`; //isModify ? `#ccc` : `#cccccc3f`;
@@ -147,4 +149,69 @@ export function drawGrid(
       .attr("font-size", 10)
       .attr("fill", "#999");
   }
+}
+
+export const createDragHandlers = <
+  ElementType extends SVGElement,
+  T extends { id: string; type?: string },
+>(
+  svg: d3.Selection<SVGSVGElement, unknown, null, undefined>,
+  getPosition: (item: T) => { x: number; y: number },
+  updatePosition: (item: T, x: number, y: number) => T,
+  setItem: (id: string, updated: T) => void,
+  svgWidth: number,
+  svgHeight: number
+) => {
+  return d3
+    .drag<ElementType, T>()
+    .on("start", (event, d) => {
+      d3.select(event.sourceEvent.target).style("opacity", 0.6);
+    })
+    .on("drag", (event, d) => {
+      const node = svg.node();
+      if (!node) return;
+
+      const transform = d3.zoomTransform(node);
+      const [xPx, yPx] = transform.invert(d3.pointer(event, node));
+
+      const x = (xPx / svgWidth) * 100;
+      const y = (yPx / svgHeight) * 100;
+
+      // special handling if type is pipe
+      let updated: T;
+      if (d.type === "pipe") {
+        // assume getPosition returns a point of the pipe to drag
+        updated = updatePosition(d, x, y);
+      } else {
+        updated = updatePosition(d, x, y);
+      }
+
+      setItem(d.id, updated);
+    })
+    .on("end", (event) => {
+      d3.select(event.sourceEvent.target).style("opacity", 1);
+    });
+};
+
+export function toggleSelection(
+  id: string,
+  type: SelectedComponent["type"],
+  setSelectedComponents: React.Dispatch<
+    React.SetStateAction<SelectedComponent[]>
+  >,
+  allowMultiSelect: boolean = true
+) {
+  setSelectedComponents((prev) => {
+    const exists = prev.some((item) => item.id === id && item.type === type);
+
+    if (exists) {
+      return prev.filter((item) => !(item.id === id && item.type === type));
+    }
+
+    if (!allowMultiSelect) {
+      return [{ id, type }]; // Only 1 active selection
+    }
+
+    return [...prev, { id, type }];
+  });
 }

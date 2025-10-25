@@ -1,5 +1,5 @@
 import * as d3 from "d3";
-import type { WaterMeter, WaterSupply } from "../types/map";
+import type { SelectedComponent, WaterMeter, WaterSupply } from "../types/map";
 export interface PipePointPercent {
   x: number;
   y: number;
@@ -7,10 +7,12 @@ export interface PipePointPercent {
 }
 import BX9 from "../../assets/B39-water-meter.png";
 import WaterSupplyImg from "../../assets/water_supply.png";
-
+import { toggleSelection } from "./util";
+import { isSelected } from "./helper";
 // Each pipe will track its own animation frame
 const pipeAnimationFrames: Record<string, number> = {};
 const waterMeterAnimationFrames: Record<string, number> = {};
+import { createDragHandlers } from "./util";
 
 export function drawPipe(
   isModify: boolean,
@@ -19,6 +21,10 @@ export function drawPipe(
   setPipePoints: (pipeId: string, points: PipePointPercent[]) => void,
   svgWidth: number,
   svgHeight: number,
+  selectedComponents: SelectedComponent[],
+  setSelectedComponents: React.Dispatch<
+    React.SetStateAction<SelectedComponent[]>
+  >,
   pipeId: string = "Default-Pipe",
   selectedPipe?: string | null,
   setSelectedPipe?: React.Dispatch<React.SetStateAction<string | null>>,
@@ -42,7 +48,6 @@ export function drawPipe(
   // Get current zoom/pan transform (so everything stays aligned)
   const transform = d3.zoomTransform(svg.node() as any);
   // --- Inner fill layer (blue water inside pipe) ---
-  const zoomLevel = transform.k;
 
   const toPixel = (p: PipePointPercent) => {
     let baseX: number;
@@ -50,22 +55,23 @@ export function drawPipe(
 
     // If linked to a meter, use that meter’s coordinates
     if (p.linkedMeterId && meters) {
-      const m = meters.find((mm) => mm.id === p.linkedMeterId);
+      /* const m = meters.find((mm) => mm.id === p.linkedMeterId);
       if (m) {
         baseX = (m.x / 100) * svgWidth;
         baseY = (m.y / 100) * svgHeight;
       } else {
         baseX = (p.x / 100) * svgWidth;
         baseY = (p.y / 100) * svgHeight;
-      }
+      } */
+      baseX = (p.x / 100) * svgWidth;
+      baseY = (p.y / 100) * svgHeight;
     } else {
       baseX = (p.x / 100) * svgWidth;
       baseY = (p.y / 100) * svgHeight;
     }
 
-    const applied = transform.apply([baseX, baseY]);
-    const x = applied[0];
-    const y = applied[1];
+    const x = baseX;
+    const y = baseY;
 
     return { x, y };
   };
@@ -80,8 +86,7 @@ export function drawPipe(
 
   // --- Outer border layer (gray pipe border) ---
   const outerBorderbasePipeThickness = Math.min(svgWidth, svgHeight) * 0.015; // base thickness (0.5%)
-  const outerBorderadjustedPipeThickness =
-    outerBorderbasePipeThickness / zoomLevel;
+  const outerBorderadjustedPipeThickness = outerBorderbasePipeThickness;
 
   pipeGroup
     .append("polyline")
@@ -93,7 +98,7 @@ export function drawPipe(
 
   // Compute pipe thickness relative to SVG size and zoom
   const basePipeThickness = Math.min(svgWidth, svgHeight) * 0.01; // base thickness (0.5%)
-  const adjustedPipeThickness = basePipeThickness / zoomLevel;
+  const adjustedPipeThickness = basePipeThickness;
   const polyline = pipeGroup
     .append("polyline")
     .attr("class", "pipe-inner")
@@ -109,12 +114,20 @@ export function drawPipe(
     .attr("fill", "none")
     .attr("stroke-linejoin", !isModify ? "round" : "miter") //Rounded corners when not modifying
     .style(`cursor`, `pointer`)
+    .style("opacity", () =>
+      isSelected(selectedComponents, pipeId, "pipe") ? 0.6 : 1
+    )
+    .on("mousedown", (event) => event.stopPropagation())
     .on("click", (event) => {
+      event.stopPropagation();
+      toggleSelection(pipeId, "pipe", setSelectedComponents);
+    });
+    /* .on("click", (event) => {
       event.stopPropagation(); // prevent deselect when clicking overlapping elements
       if (setSelectedPipe) {
         setSelectedPipe((prev) => (prev === pipeId ? null : pipeId));
       }
-    });
+    }); */
 
   // --- Flow effect ---
   const totalLength = (polyline.node()?.getTotalLength() ?? 0) || 0;
@@ -132,8 +145,8 @@ export function drawPipe(
   const baseParticleHeight = Math.min(svgWidth, svgHeight) * 0.004;
 
   // Adjust particle SIZE with zoom (so they shrink/grow visually)
-  const adjustedParticleWidth = baseParticleWidth / zoomLevel;
-  const adjustedParticleHeight = baseParticleHeight / zoomLevel;
+  const adjustedParticleWidth = baseParticleWidth;
+  const adjustedParticleHeight = baseParticleHeight;
 
   // --- Create particle rectangles ---
   const flowRects = Array.from({ length: flowParticleCount }).map(() =>
@@ -204,6 +217,8 @@ export function drawPipe(
         setPipePoints,
         svgWidth,
         svgHeight,
+        selectedComponents,
+        setSelectedComponents,
         pipeId,
         selectedPipe,
         setSelectedPipe,
@@ -215,6 +230,7 @@ export function drawPipe(
   const midIndex = Math.floor(pipePoints.length / 2);
   const midPoint = pipePoints[midIndex];
   const { x: pixelX, y: pixelY } = toPixel(midPoint);
+
   if (isModify) {
     pipeGroup
       .append("text")
@@ -227,8 +243,9 @@ export function drawPipe(
       .text(pipeId);
   }
 
-  const size = 6;
+  const size = Math.min(svgWidth, svgHeight) * 0.013;
 
+  /* Mark or point of the pipe angle */
   pipeGroup
     .selectAll<SVGRectElement, PipePointPercent>("rect.drag-handle")
     .data(pipePoints, (_, i) => i)
@@ -241,14 +258,15 @@ export function drawPipe(
           .attr("height", size)
           .attr("fill", "#fff")
           .attr("stroke", "#007bff")
-          .attr("stroke-width", 1)
+          .attr("stroke-width", 0.3)
           .style("cursor", "pointer")
           .call(drag),
       (update) => update,
       (exit) => exit.remove()
     )
-    .attr("x", (d) => transform.applyX((d.x / 100) * svgWidth) - size / 2)
-    .attr("y", (d) => transform.applyY((d.y / 100) * svgHeight) - size / 2)
+    .attr("x", (d) => toPixel(d).x - size / 2)
+    .attr("y", (d) => toPixel(d).y - size / 2)
+
     .style("display", isModify ? "block" : "none")
 
     .call(drag);
@@ -261,29 +279,30 @@ export function drawWaterMeter(
   setMeters: (id: string, meter: WaterMeter) => void,
   svgWidth: number,
   svgHeight: number,
-  selectedMeter?: string | null,
-  setSelectedMeter?: React.Dispatch<React.SetStateAction<string | null>>,
-  isModify: boolean = false
+
+  isModify: boolean = false,
+
+  selectedComponents: SelectedComponent[],
+  setSelectedComponents: React.Dispatch<
+    React.SetStateAction<SelectedComponent[]>
+  >
 ) {
   // Remove existing meters
   svg.selectAll(".water-meter").remove();
-  // Get current zoom transform
-  const transform = d3.zoomTransform(svg.node() as Element);
+  // Ensure we have a map layer
+  const g = svg.select<SVGGElement>(".map-layer");
+  if (g.empty()) return;
 
   meters.forEach((meter) => {
-    const g = svg.select(".map-layer");
     const meterGroup = g
       .append("g")
       .attr("class", `water-meter meter-${meter.id}`);
 
     // Apply zoom transform to position
-    const [transformedX, transformedY] = transform.apply([
-      (meter.x / 100) * svgWidth,
-      (meter.y / 100) * svgHeight,
-    ]);
+    const posX = (meter.points[0].x / 100) * svgWidth;
+    const posY = (meter.points[0].y / 100) * svgHeight;
 
-    const zoomScale = transform.k;
-    const radius = (Math.min(svgWidth, svgHeight) * 0.028) / zoomScale;
+    const radius = Math.min(svgWidth, svgHeight) * 0.028;
 
     const circle =
       //use this for image
@@ -291,8 +310,8 @@ export function drawWaterMeter(
         .append("image")
         .data([meter])
         .attr("href", BX9) // <-- your image path
-        .attr("x", transformedX - radius)
-        .attr("y", transformedY - radius)
+        .attr("x", posX - radius)
+        .attr("y", posY - radius)
         .attr("width", radius * 2)
         .attr("height", radius * 2)
         .attr("clip-path", "circle(50%)") // keeps it circular
@@ -309,39 +328,39 @@ export function drawWaterMeter(
         )
         .attr("stroke", "#007bff")
         .attr("stroke-width", 1) */
-        .style("cursor", "move")
-        .on("click", (event, d) => {
+        .style("opacity", () =>
+          isSelected(selectedComponents, meter.id, "water-meter") ? 0.6 : 1
+        )
+        .style("cursor", isModify ? "move" : "pointer")
+        .on("mousedown", (event) => event.stopPropagation())
+        .on("click", (event) => {
           event.stopPropagation();
-          if (setSelectedMeter) {
-            setSelectedMeter((prev) => (prev === d.id ? null : d.id));
-          }
+          toggleSelection(meter.id, "water-meter", setSelectedComponents);
         });
 
     // Responsive meter label
     meterGroup
       .append("text")
-      .attr("x", transformedX)
-      .attr("y", transformedY - radius + 1) // slightly above the meter
+      .attr("x", posX)
+      .attr("y", posY - radius + 1) // slightly above the meter
       .attr("text-anchor", "middle")
       .attr("fill", "#000")
-      .style("font-size", `${8 / zoomScale}px`)
+      .style("font-size", `${8}px`)
       .style("font-weight", 600)
       .text(meter.id);
 
     if (isModify) {
-      const drag = d3
-        //.drag<SVGCircleElement, WaterMeter>()
-        .drag<SVGImageElement, WaterMeter>()
-        .on("drag", (event, d) => {
-          if (!svg.node()) return;
-          // Get pointer position (in zoomed space)
-          const [xPx, yPx] = transform.invert(d3.pointer(event, svg.node()));
-
-          const x = (xPx / svgWidth) * 100;
-          const y = (yPx / svgHeight) * 100;
-
-          setMeters(d.id, { ...d, x, y });
-        });
+      const drag = createDragHandlers<SVGImageElement, WaterMeter>(
+        svg,
+        (meter) => meter.points[0], // get position
+        (meter, x, y) => ({
+          ...meter,
+          points: [{ x, y }, ...meter.points.slice(1)],
+        }),
+        setMeters,
+        svgWidth,
+        svgHeight
+      );
 
       circle.call(drag);
     }
@@ -355,29 +374,28 @@ export function drawWaterSupply(
   setSupplies: (id: string, meter: WaterSupply) => void,
   svgWidth: number,
   svgHeight: number,
-  selectedSupply?: string | null,
-  setSelectedSupply?: React.Dispatch<React.SetStateAction<string | null>>,
-  isModify: boolean = false
+
+  isModify: boolean = false,
+
+  selectedComponents: SelectedComponent[],
+  setSelectedComponents: React.Dispatch<
+    React.SetStateAction<SelectedComponent[]>
+  >
 ) {
   // Remove existing meters
   svg.selectAll(".water-supply").remove();
-  // Get current zoom transform
-  const transform = d3.zoomTransform(svg.node() as Element);
 
   supplies.forEach((supply) => {
-    const g = svg.select(".map-layer");
+    const g = svg.select(".zoom-layer");
     const supplyGroup = g
       .append("g")
       .attr("class", `water-supply supply-${supply.id}`);
 
     // Apply zoom transform to position
-    const [transformedX, transformedY] = transform.apply([
-      (supply.x / 100) * svgWidth,
-      (supply.y / 100) * svgHeight,
-    ]);
+    const posX = (supply.points[0].x / 100) * svgWidth;
+    const posY = (supply.points[0].y / 100) * svgHeight;
 
-    const zoomScale = transform.k;
-    const radius = (Math.min(svgWidth, svgHeight) * 0.028) / zoomScale;
+    const radius = Math.min(svgWidth, svgHeight) * 0.028;
 
     const circle =
       //use this for image
@@ -385,57 +403,56 @@ export function drawWaterSupply(
         .append("image")
         .data([supply])
         .attr("href", WaterSupplyImg) // <-- your image path
-        .attr("x", transformedX - radius)
-        .attr("y", transformedY - radius)
+        .attr("x", posX - radius)
+        .attr("y", posY - radius)
         .attr("width", radius * 3.5)
         .attr("height", radius * 3.5)
         .attr("clip-path", "circle(50%)") // keeps it circular
 
-        /* meterGroup
+        /* supplyGroup
         .append("circle")
-        .datum(meter) // <-- bind the datum here
-        .attr("cx", transformedX)
-        .attr("cy", transformedY)
+        .datum(supply) // <-- bind the datum here
+        .attr("cx", posX)
+        .attr("cy", posY)
         .attr("r", radius)
         .attr(
           "fill",
-          selectedMeter === meter.id && isModify ? "#8bc4fcff" : "#727272ff"
+          selectedSupply === supply.id && isModify ? "#8bc4fcff" : "#727272ff"
         )
         .attr("stroke", "#007bff")
         .attr("stroke-width", 1) */
-        .style("cursor", "move")
-        .on("click", (event, d) => {
+        .style("opacity", () =>
+          isSelected(selectedComponents, supply.id, "water-supply") ? 0.6 : 1
+        )
+        .style("cursor", isModify ? "move" : "pointer")
+        .on("mousedown", (event) => event.stopPropagation())
+        .on("click", (event) => {
           event.stopPropagation();
-          if (setSelectedSupply) {
-            setSelectedSupply((prev) => (prev === d.id ? null : d.id));
-          }
+          toggleSelection(supply.id, "water-supply", setSelectedComponents);
         });
 
     // Meter label
-    /*  meterGroup
+    supplyGroup
       .append("text")
-      .attr("x", transformedX)
-      .attr("y", transformedY - 25)
+      .attr("x", posX + 8)
+      .attr("y", posY - 5)
       .attr("text-anchor", "middle")
       .attr("font-size", 10)
       .attr("fill", "#000")
-      .text(meter.id); */
+      .text(supply.id);
 
     if (isModify) {
-      const drag = d3
-        //.drag<SVGCircleElement, WaterSupply>()
-        .drag<SVGImageElement, WaterSupply>()
-        .on("drag", (event, d) => {
-          if (!svg.node()) return;
-          // Get pointer position (in zoomed space)
-          const [xPx, yPx] = transform.invert(d3.pointer(event, svg.node()));
-
-          const x = (xPx / svgWidth) * 100;
-          const y = (yPx / svgHeight) * 100;
-
-          setSupplies(d.id, { ...d, x, y });
-        });
-
+      const drag = createDragHandlers<SVGImageElement, WaterSupply>(
+        svg,
+        (tank) => tank.points[0],
+        (tank, x, y) => ({
+          ...tank,
+          points: [{ x, y }, ...tank.points.slice(1)],
+        }),
+        setSupplies,
+        svgWidth,
+        svgHeight
+      );
       circle.call(drag);
     }
   });

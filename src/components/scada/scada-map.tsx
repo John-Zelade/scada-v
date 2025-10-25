@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import WaterBranch from "../../assets/water-branch.png";
+
+import { KeyCntrls } from "./key-ctrls";
+import { toggleSelection } from "./util";
 import { drawPipe, drawWaterMeter, drawWaterSupply } from "./scada-components";
-import { water_pipes, water_meters, water_supply } from "@/lib/mock-date";
-import { drawGrid } from "./utill";
-import { handleMouseDown, handleMouseMove, handleMouseUp } from "./utill";
-import type { WaterMeter } from "../types/map";
+import { water_pipes, water_meters, water_supply } from "@/lib/mock-data";
+import { drawGrid } from "./util";
+import { handleMouseDown, handleMouseMove, handleMouseUp } from "./util";
+import type { WaterMeter, SelectedComponent } from "../types/map";
 
 // Types
 interface PipePoint {
@@ -44,21 +47,22 @@ export function SCADAMap({
   const dragOffset = useRef({ x: 0, y: 0 });
 
   const [selectedTool, setSelectedTool] = useState<ToolType>(null);
+  const [selectedComponents, setSelectedComponents] = useState<
+    SelectedComponent[]
+  >([]);
+  console.log(`selectedComponents`, selectedComponents);
 
   const [selectedPipe, setSelectedPipe] = useState<string | null>(null);
   // Pipes stored data
-  const [pipes, setPipes] = useState(water_pipes);
+  const [pipes, setPipes] = useState(water_pipes.pipes);
 
-  const [supplies, setSupplies] = useState(water_supply);
-  const [selectedSupply, setSelectedSupply] = useState<string | null>(null);
-
-  const [meters, setMeters] = useState<WaterMeter[]>(water_meters);
-  const [selectedMeter, setSelectedMeter] = useState<string | null>(null);
+  const [supplies, setSupplies] = useState(water_supply.supply); // water supply
+  const [meters, setMeters] = useState<WaterMeter[]>(water_meters.meters); // water meter
 
   //console.log(`panelPos`, panelPos);
   //console.log(`meters`, meters);
-  console.log(`pipes`, pipes);
-  console.log(`supplies`, supplies);
+  //console.log(`pipes`, pipes);
+  //console.log(`supplies`, supplies);
   useEffect(() => {
     const moveListener = (e: MouseEvent) =>
       handleMouseMove({ e, isDragging, setPanelPos, dragOffset, dimensions });
@@ -90,7 +94,7 @@ export function SCADAMap({
       if (!svgRef.current) return;
 
       const { width, height } = svgRef.current.getBoundingClientRect();
-      console.log("Measured SVG:", width, height);
+      //console.log("Measured SVG:", width, height);
       setDimensions({ width, height });
 
       // Always clear existing grid first
@@ -107,14 +111,14 @@ export function SCADAMap({
     window.addEventListener("resize", update);
 
     return () => window.removeEventListener("resize", update);
-  }, [isModify]);
+  }, []);
 
   /* Handles Zoom and Pan */
   useEffect(() => {
     if (!svgRef.current) return;
 
     const svg = d3.select(svgRef.current);
-    const g = svg.select(".map-layer");
+    const g = svg.select(".zoom-layer");
 
     svg.call(
       d3
@@ -125,6 +129,69 @@ export function SCADAMap({
         })
     );
   }, []);
+
+  /* This used to zoom and grad whole pipe */
+  /* useEffect(() => {
+    if (!svgRef.current) return;
+    const svg = d3.select(svgRef.current);
+
+    // Apply zoom behavior
+    svg.call(
+      d3
+        .zoom<SVGSVGElement, unknown>()
+        .scaleExtent([1e-5, 1e5])
+        .on("zoom", (event) => {
+          if (!selectedPipe) return;
+
+          // Apply the transform to the pipe group
+          svg
+            .selectAll(`.pipe-group-${selectedPipe}`)
+            .attr("transform", event.transform);
+
+          // Extract translation
+          const { x, y, k } = event.transform;
+
+          // Get pipe points after transformation
+          const pipeGroup = svg.selectAll<SVGGElement, unknown>(
+            `.pipe-group-${selectedPipe}`
+          );
+
+          const points: { x: number; y: number }[] = [];
+          pipeGroup.selectAll("polyline.pipe-inner").each(function () {
+            const pl = this as SVGPolylineElement;
+            const pts = pl.points;
+            for (let i = 0; i < pts.numberOfItems; i++) {
+              points.push({
+                x: ((pts.getItem(i).x * k + x) / dimensions.width) * 100,
+                y: ((pts.getItem(i).y * k + y) / dimensions.height) * 100,
+              });
+            }
+          });
+
+          // ✅ Log the points in a readable way
+          console.log(`Pipe "${selectedPipe}" moved:`);
+          points.forEach((p, i) => {
+            console.log(
+              `  Point ${i + 1}: x=${p.x.toFixed(4)}, y=${p.y.toFixed(4)}`
+            );
+          });
+        })
+    );
+  }, [selectedPipe]); */
+
+  /* ======================================================= */
+  /*                   Handles Key Ctrls                     */
+  /* ======================================================= */
+  /* useEffect(() => {
+    const keyControl = new KeyCntrls(
+      () => selectedSupply,
+      () => supplies,
+      (id, updated) =>
+        setSupplies((prev) => prev.map((s) => (s.id === id ? updated : s)))
+    );
+
+    return () => keyControl.destroy();
+  }, [selectedSupply, supplies]); */
 
   // Draw pipes
   useEffect(() => {
@@ -141,13 +208,24 @@ export function SCADAMap({
         handleSetPipePoints,
         dimensions.width,
         dimensions.height,
+
+        selectedComponents,
+        setSelectedComponents,
+
         pipe.id,
         selectedPipe,
         setSelectedPipe,
         meters
       );
     });
-  }, [pipes, dimensions, selectedPipe, selectedTool, isModify]);
+  }, [
+    pipes,
+    dimensions,
+    selectedPipe,
+    selectedTool,
+    isModify,
+    selectedComponents,
+  ]);
 
   // Draw meters
   useEffect(() => {
@@ -161,11 +239,11 @@ export function SCADAMap({
         setMeters((prev) => prev.map((m) => (m.id === id ? meter : m))),
       dimensions.width,
       dimensions.height,
-      selectedMeter,
-      setSelectedMeter,
-      isModify
+      isModify,
+      selectedComponents,
+      setSelectedComponents
     );
-  }, [meters, dimensions, isModify]);
+  }, [meters, dimensions, isModify, selectedComponents]);
 
   /* Draw Water Supply */
   useEffect(() => {
@@ -179,11 +257,11 @@ export function SCADAMap({
         setSupplies((prev) => prev.map((s) => (s.id === id ? supply : s))),
       dimensions.width,
       dimensions.height,
-      selectedSupply,
-      setSelectedSupply,
-      isModify
+      isModify,
+      selectedComponents,
+      setSelectedComponents
     );
-  }, [supplies, dimensions, isModify]);
+  }, [supplies, dimensions, isModify, selectedComponents]);
 
   // Add new pipe dynamically
   const addPipe = () => {
@@ -198,7 +276,7 @@ export function SCADAMap({
     };
 
     // Append to pipes array
-    setPipes((prev: typeof water_pipes) => [...prev, newPipe]);
+    setPipes((prev: typeof water_pipes.pipes) => [...prev, newPipe]);
   };
 
   // Add this inside your SCADAMap component
@@ -312,7 +390,10 @@ export function SCADAMap({
           display: "block",
         }}
       >
-        <g className="map-layer" />
+        <g className="zoom-layer">
+          <g className="grid-layer" />
+          <g className="map-layer" />
+        </g>
       </svg>
     </div>
   );
