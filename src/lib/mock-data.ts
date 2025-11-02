@@ -1,3 +1,5 @@
+import type { Rectangle } from "recharts";
+
 export const water_pipes = {
   type: "pipe",
   pipes: [
@@ -818,4 +820,75 @@ export const water_supply = {
       points: [{ x: 44.77296276810593, y: 24.518517388237846 }],
     },
   ],
+};
+
+export const Shapes = {
+  // Basic geometric shapes
+  circle: [
+    { id: "circle01", points: [{ x: 10, y: 10 }] },
+    { id: "circle02", points: [{ x: 10, y: 20 }] },
+  ],
+ 
+  rect: [
+    { id: "rect01", points: [{ x: 5, y: 5 }] },
+    { id: "rect02", points: [{ x: 15, y: 15 }] },
+  ],
+
+  line: [
+    {
+      id: "line01",
+      points: [
+        { x: 10, y: 10 },
+        { x: 40, y: 10 },
+      ],
+    },
+  ],
+
+  polygon: [
+    {
+      id: "poly01",
+      points: [
+        { x: 10, y: 10 },
+        { x: 20, y: 20 },
+        { x: 15, y: 30 },
+      ],
+    },
+  ],
+
+  // SCADA-specific components
+  valve: [
+    { id: "valve01", points: [{ x: 30, y: 30 }] }, // manual or motorized valve
+  ],
+
+  pump: [{ id: "pump01", points: [{ x: 50, y: 50 }] }],
+
+  tank: [{ id: "tank01", points: [{ x: 60, y: 20 }] }],
+
+  pipe: [
+    {
+      id: "pipe01",
+      points: [
+        { x: 15, y: 20 },
+        { x: 35, y: 20 },
+        { x: 35, y: 40 },
+      ],
+    },
+  ],
+
+  sensor: [
+    { id: "sensor01", points: [{ x: 40, y: 40 }] }, // pressure, flow, or temperature
+  ],
+
+  motor: [{ id: "motor01", points: [{ x: 70, y: 30 }] }],
+
+  indicator: [
+    { id: "indicator01", points: [{ x: 80, y: 20 }] }, // status indicator (on/off)
+  ],
+
+  text: [{ id: "label01", points: [{ x: 20, y: 5 }], text: "Main Line" }],
+
+  //Electrical/PLC-like symbols
+  switch: [{ id: "switch01", points: [{ x: 25, y: 45 }] }],
+
+  transformer: [{ id: "transformer01", points: [{ x: 45, y: 55 }] }],
 };

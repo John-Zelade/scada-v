@@ -5,5 +5,5 @@ export function isSelected(
   id: string,
   type: SelectedComponent["type"]
 ): boolean {
-  return selected.some((item) => item.id === id && item.type === type);
+  return selected.some((item) => item.data.id === id && item.type === type);
 }

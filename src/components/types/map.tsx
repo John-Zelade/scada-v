@@ -3,7 +3,17 @@ export type Dimensions = {
   height: number;
 };
 
+export interface GroupDragHandlerProps<T> {
+  svg: d3.Selection<SVGSVGElement, unknown, null, undefined>;
+  selectedComponents: SelectedComponent[];
+  pipes: Pipes[];
+  setPipes: (id: string, updated: Pipes) => void;
+  svgWidth: number;
+  svgHeight: number;
+}
+
 export interface PipePoint {
+  id: string;
   x: number;
   y: number;
 }
@@ -15,7 +25,7 @@ export type PipePointDatum = {
 
 export interface Pipes {
   id: string;
-  points: { x: number; y: number }[];
+  points: { id: string; x: number; y: number }[];
 }
 
 export interface WaterMeter {
@@ -28,7 +38,34 @@ export interface WaterSupply {
   points: { x: number; y: number }[];
 }
 
-export type SelectedComponent = {
+export interface Shape {
   id: string;
-  type: "water-supply" | "water-meter" | "pipe"; // extend if more types later
+  points: { x: number; y: number }[];
+}
+
+export type Point = {
+  x: number;
+  y: number;
+};
+
+export interface ShapeItem {
+  id: string;
+  points: Point[];
+}
+
+export interface ShapesType {
+  circle: ShapeItem[];
+  rect: ShapeItem[];
+  line: ShapeItem[];
+  pipe: ShapeItem[];
+  valve: ShapeItem[];
+  pump: ShapeItem[];
+  tank: ShapeItem[];
+  sensor: ShapeItem[];
+  text: ShapeItem[];
+}
+
+export type SelectedComponent = {
+  data: WaterSupply | WaterMeter | Pipes;
+  type: "water-supply" | "water-meter" | "pipe" | "circle"; // extend if more types later
 };

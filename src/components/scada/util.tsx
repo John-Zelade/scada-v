@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import type { SelectedComponent, WaterMeter, WaterSupply } from "../types/map";
+import type {
+  GroupDragHandlerProps,
+  Pipes,
+  SelectedComponent,
+  WaterMeter,
+  WaterSupply,
+} from "../types/map";
 import * as d3 from "d3";
 
 interface PanelPos {
@@ -185,16 +191,87 @@ export const createDragHandlers = <
       } else {
         updated = updatePosition(d, x, y);
       }
-
       setItem(d.id, updated);
+      // Keep opacity at 0.6 during drag
+      //d3.select(event.sourceEvent.target).style("opacity", 0.6);
     })
     .on("end", (event) => {
-      d3.select(event.sourceEvent.target).style("opacity", 1);
+      //d3.select(event.sourceEvent.target).style("opacity", 0.6);
     });
 };
 
+export const GroupDragHandler = <T extends Pipes>({
+  svg,
+  selectedComponents,
+  pipes,
+  setPipes,
+  svgWidth,
+  svgHeight,
+}: GroupDragHandlerProps<T>) => {
+  const g = svg.select(".zoom-layer");
+
+  selectedComponents.forEach((selected) => {
+    if (selected.type !== "pipe") return;
+
+    // Find the pipe object from main pipes array
+    const pipe = pipes.find((p) => p.id === selected.data.id);
+    if (!pipe) return;
+
+    const pipeGroup = g.select(`.pipe-group-${pipe.id}`) as d3.Selection<
+      SVGGElement,
+      unknown,
+      null,
+      undefined
+    >;
+
+    console.log(`pipeGroup`, pipeGroup);
+
+    pipeGroup
+      .insert("rect", ":first-child")
+      .attr("x", 0)
+      .attr("y", 0)
+      .attr("width", svgWidth)
+      .attr("height", svgHeight)
+      .style("opacity", 0.05);
+
+    pipeGroup.call(
+      d3
+        .drag<SVGGElement, unknown>()
+        .on("start", (event) => {
+          event.sourceEvent.stopPropagation();
+
+          // Save starting points for this drag
+          (event.subject as any).startPoints = pipe.points.map((p) => ({
+            ...p,
+          }));
+        })
+        .on("drag", (event) => {
+          const node = svg.node();
+          if (!node) return;
+
+          console.log(`node list`, node);
+
+          const transform = d3.zoomTransform(node);
+          console.log(`transform`, transform);
+
+          // Add pixel delta to each point
+          const updatedPoints = pipe.points.map((p) => ({
+            ...p,
+            x: p.x + (event.dx / svgWidth) * 100, // if you store % coords
+            y: p.y + (event.dy / svgHeight) * 100,
+          }));
+
+          setPipes(pipe.id, { ...pipe, points: updatedPoints });
+        })
+        .on("end", () => {
+          // optional cleanup
+        })
+    );
+  });
+};
+
 export function toggleSelection(
-  id: string,
+  data: WaterSupply | WaterMeter | Pipes,
   type: SelectedComponent["type"],
   setSelectedComponents: React.Dispatch<
     React.SetStateAction<SelectedComponent[]>
@@ -202,16 +279,20 @@ export function toggleSelection(
   allowMultiSelect: boolean = true
 ) {
   setSelectedComponents((prev) => {
-    const exists = prev.some((item) => item.id === id && item.type === type);
+    const exists = prev.some(
+      (item) => item.data.id === data.id && item.type === type
+    );
 
     if (exists) {
-      return prev.filter((item) => !(item.id === id && item.type === type));
+      return prev.filter(
+        (item) => !(item.data.id === data.id && item.type === type)
+      );
     }
 
     if (!allowMultiSelect) {
-      return [{ id, type }]; // Only 1 active selection
+      return [{ data, type }]; // Only 1 active selection
     }
 
-    return [...prev, { id, type }];
+    return [...prev, { data, type }];
   });
 }

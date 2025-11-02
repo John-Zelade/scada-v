@@ -4,11 +4,26 @@ import WaterBranch from "../../assets/water-branch.png";
 
 import { KeyCntrls } from "./key-ctrls";
 import { toggleSelection } from "./util";
-import { drawPipe, drawWaterMeter, drawWaterSupply } from "./scada-components";
-import { water_pipes, water_meters, water_supply } from "@/lib/mock-data";
+import {
+  drawPipe,
+  drawWaterMeter,
+  drawWaterSupply,
+} from "./components/scada-components";
+import {
+  water_pipes,
+  water_meters,
+  water_supply,
+  Shapes,
+} from "@/lib/mock-data";
 import { drawGrid } from "./util";
 import { handleMouseDown, handleMouseMove, handleMouseUp } from "./util";
-import type { WaterMeter, SelectedComponent } from "../types/map";
+import type {
+  WaterMeter,
+  SelectedComponent,
+  WaterSupply,
+  ShapesType,
+} from "../types/map";
+import { drawCircle } from "./components/shapes/circle";
 
 // Types
 interface PipePoint {
@@ -24,6 +39,7 @@ interface PipeData {
 
 interface SCADAMapProps {
   isModify: boolean;
+  showElements: boolean;
   width?: number;
   height?: number;
 }
@@ -32,6 +48,7 @@ type ToolType = "pipe" | "tank" | "meter" | null;
 
 export function SCADAMap({
   isModify,
+  showElements,
   width = 600,
   height = 400,
 }: SCADAMapProps) {
@@ -50,14 +67,14 @@ export function SCADAMap({
   const [selectedComponents, setSelectedComponents] = useState<
     SelectedComponent[]
   >([]);
-  console.log(`selectedComponents`, selectedComponents);
 
   const [selectedPipe, setSelectedPipe] = useState<string | null>(null);
+
   // Pipes stored data
   const [pipes, setPipes] = useState(water_pipes.pipes);
-
-  const [supplies, setSupplies] = useState(water_supply.supply); // water supply
+  const [supplies, setSupplies] = useState<WaterSupply[]>(water_supply.supply); // water supply
   const [meters, setMeters] = useState<WaterMeter[]>(water_meters.meters); // water meter
+  const [shapes, setShapes] = useState<ShapesType>(Shapes);
 
   //console.log(`panelPos`, panelPos);
   //console.log(`meters`, meters);
@@ -130,6 +147,24 @@ export function SCADAMap({
     );
   }, []);
 
+  // Draw Shape Components
+  useEffect(() => {
+    if (!svgRef.current) return;
+    const svg = d3.select(svgRef.current);
+
+    // Clear or draw per shape type
+    drawCircle(
+      svg,
+      shapes,
+      setShapes,
+      dimensions.width,
+      dimensions.height,
+      isModify,
+      selectedComponents,
+      setSelectedComponents
+    );
+  }, [shapes, dimensions, isModify, selectedComponents]);
+
   /* This used to zoom and grad whole pipe */
   /* useEffect(() => {
     if (!svgRef.current) return;
@@ -196,36 +231,27 @@ export function SCADAMap({
   // Draw pipes
   useEffect(() => {
     if (!svgRef.current) return;
-    if (!Array.isArray(pipes)) return;
-
     const svg = d3.select(svgRef.current);
+    const pipesWithIds = pipes.map((pipe) => ({
+      ...pipe,
+      points: pipe.points.map((p, idx) => ({
+        ...p,
+        id: `${pipe.id}-pt${idx}`, // unique ID per point
+      })),
+    }));
 
-    pipes.forEach((pipe) => {
-      drawPipe(
-        isModify,
-        svg,
-        pipe.points,
-        handleSetPipePoints,
-        dimensions.width,
-        dimensions.height,
-
-        selectedComponents,
-        setSelectedComponents,
-
-        pipe.id,
-        selectedPipe,
-        setSelectedPipe,
-        meters
-      );
-    });
-  }, [
-    pipes,
-    dimensions,
-    selectedPipe,
-    selectedTool,
-    isModify,
-    selectedComponents,
-  ]);
+    drawPipe(
+      svg,
+      pipesWithIds,
+      (id, pipe) =>
+        setPipes((prev) => prev.map((p) => (p.id === id ? pipe : p))),
+      dimensions.width,
+      dimensions.height,
+      isModify,
+      selectedComponents,
+      setSelectedComponents
+    );
+  }, [pipes, dimensions, isModify, selectedComponents]);
 
   // Draw meters
   useEffect(() => {
