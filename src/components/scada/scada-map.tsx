@@ -13,8 +13,8 @@ import {
   water_pipes,
   water_meters,
   water_supply,
-  Shapes,
-} from "@/lib/mock-data";
+  Elements,
+} from "@/lib/mock-data/mock-data";
 import { drawGrid } from "./util";
 import { handleMouseDown, handleMouseMove, handleMouseUp } from "./util";
 import type {
@@ -38,6 +38,12 @@ interface PipeData {
 }
 
 interface SCADAMapProps {
+  modifiedShapes: ShapesType[];
+  setModifiedShapes: React.Dispatch<React.SetStateAction<ShapesType[]>>;
+
+  shapes: ShapesType;
+  setShapes: React.Dispatch<React.SetStateAction<ShapesType>>;
+
   isModify: boolean;
   showElements: boolean;
   width?: number;
@@ -47,11 +53,20 @@ interface SCADAMapProps {
 type ToolType = "pipe" | "tank" | "meter" | null;
 
 export function SCADAMap({
+  modifiedShapes,
+  setModifiedShapes,
+
+  shapes,
+  setShapes,
+
   isModify,
   showElements,
   width = 600,
   height = 400,
 }: SCADAMapProps) {
+  console.log(`modifiedShapes: `, modifiedShapes);
+  console.log(`shapes: `, shapes);
+
   const svgRef = useRef<SVGSVGElement>(null);
   const [dimensions, setDimensions] = useState({ width, height });
   // 🟩 Tool panel position (movable)
@@ -74,7 +89,6 @@ export function SCADAMap({
   const [pipes, setPipes] = useState(water_pipes.pipes);
   const [supplies, setSupplies] = useState<WaterSupply[]>(water_supply.supply); // water supply
   const [meters, setMeters] = useState<WaterMeter[]>(water_meters.meters); // water meter
-  const [shapes, setShapes] = useState<ShapesType>(Shapes);
 
   //console.log(`panelPos`, panelPos);
   //console.log(`meters`, meters);
@@ -157,6 +171,10 @@ export function SCADAMap({
       svg,
       shapes,
       setShapes,
+
+      modifiedShapes,
+      setModifiedShapes,
+
       dimensions.width,
       dimensions.height,
       isModify,
@@ -372,7 +390,7 @@ export function SCADAMap({
     >
       {/* === Tool Panel === */}
       <div
-        className={`${isModify ? "" : "hidden"} backdrop-blur-md bg-white/20 border border shadow-lg rounded-md p-4 flex flex-col`}
+        className={`${"hidden"} backdrop-blur-md bg-white/20 border border shadow-lg rounded-md p-4 flex flex-col`}
         onMouseDown={(e) =>
           handleMouseDown(e, panelPos, setIsDragging, dragOffset, dimensions)
         }

@@ -822,7 +822,7 @@ export const water_supply = {
   ],
 };
 
-export const Shapes = {
+export const Elements = {
   // Basic geometric shapes
   circle: [
     { id: "circle01", points: [{ x: 10, y: 10 }] },

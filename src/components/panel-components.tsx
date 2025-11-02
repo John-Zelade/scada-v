@@ -13,6 +13,7 @@ import {
   PanelRightClose,
   ChevronDown,
   ChevronRight,
+  Slash,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -21,14 +22,31 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { categories } from "@/lib/mock-data/panel-comp";
 import { Card } from "@/components/ui/card";
+import type { ShapesType } from "./types/map";
 
 type Props = {
-  setshowElements?: (value: boolean) => void;
+  modifiedShapes: ShapesType[];
+  setModifiedShapes: React.Dispatch<React.SetStateAction<ShapesType[]>>;
+
+  shapes: ShapesType;
+  setShapes: React.Dispatch<React.SetStateAction<ShapesType>>;
+
+  isModify: boolean;
+  setshowElements: (value: boolean) => void;
   showElements: boolean;
 };
 
 export function PanelComponents({
+  modifiedShapes,
+  setModifiedShapes,
+
+  shapes,
+  setShapes,
+
+  isModify,
+
   setshowElements,
   showElements = true,
 }: Props) {
@@ -38,51 +56,21 @@ export function PanelComponents({
     electrical: true,
   });
 
+  /* This handles updating elements data */
+  function handleShapeUpdate(newShapes: ShapesType) {
+    setModifiedShapes((prev: ShapesType[]) => [...prev, newShapes]);
+    setShapes(newShapes);
+  }
+
   const toggle = (key: keyof typeof expanded) =>
     setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
-
-  const categories = [
-    {
-      name: "Basic Shapes",
-      key: "shapes",
-      items: [
-        { name: "Circle", icon: <Circle className="h-4 w-4 text-blue-500" /> },
-        {
-          name: "Rectangle",
-          icon: <Square className="h-4 w-4 text-green-500" />,
-        },
-        { name: "Line", icon: <LineChart className="h-4 w-4 text-gray-500" /> },
-        { name: "Label", icon: <Type className="h-4 w-4 text-orange-500" /> },
-      ],
-    },
-    {
-      name: "Mechanical Components",
-      key: "mechanical",
-      items: [
-        { name: "Valve", icon: <Droplets className="h-4 w-4 text-sky-500" /> },
-        { name: "Pump", icon: <Gauge className="h-4 w-4 text-cyan-600" /> },
-        { name: "Motor", icon: <Zap className="h-4 w-4 text-yellow-500" /> },
-      ],
-    },
-    {
-      name: "Electrical Components",
-      key: "electrical",
-      items: [
-        { name: "Sensor", icon: <Cpu className="h-4 w-4 text-purple-500" /> },
-        {
-          name: "Switch",
-          icon: <SwitchCamera className="h-4 w-4 text-emerald-500" />,
-        },
-      ],
-    },
-  ];
 
   return (
     <div className="relative flex w-full flex-col md:col-span-5">
       {/* Toggle Button - Floating Left Edge */}
       <div
         onClick={() => setshowElements?.(!showElements)}
-        className="absolute -right-[25px] top-2 z-50 flex rounded-r-sm bg-primary p-[5px] cursor-pointer hover:bg-primary/80 transition"
+        className="absolute -right-[25px] top-8 z-50 flex rounded-r-sm bg-primary p-[5px] cursor-pointer hover:bg-primary/80 transition"
       >
         <TooltipProvider>
           <Tooltip>
@@ -127,16 +115,24 @@ export function PanelComponents({
               </div>
 
               {expanded[category.key as keyof typeof expanded] && (
-                <div className="ml-4 mt-1 grid grid-cols-2 gap-2">
-                  {category.items.map((item) => (
-                    <div
-                      key={item.name}
-                      className="flex items-center gap-2 rounded-md border p-2 hover:bg-muted cursor-pointer transition text-xs font-medium"
-                    >
-                      {item.icon}
-                      <span>{item.name}</span>
-                    </div>
-                  ))}
+                <div className="ml-4 mt-1 flex gap-2">
+                  <TooltipProvider>
+                    {category.items.map((item) => (
+                      <Tooltip>
+                        <TooltipTrigger className="cursor-pointer" asChild>
+                          <div
+                            key={item.name}
+                            className="items-center gap-2 rounded-md text-gray-600 p-2 hover:bg-muted cursor-pointer transition text-xs font-medium"
+                          >
+                            {item.icon}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">
+                          {item.name}
+                        </TooltipContent>
+                      </Tooltip>
+                    ))}
+                  </TooltipProvider>
                 </div>
               )}
             </div>

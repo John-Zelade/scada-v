@@ -10,6 +10,10 @@ export function drawCircle(
   svg: d3.Selection<SVGSVGElement, unknown, null, undefined>,
   shapes: ShapesType,
   setShapes: React.Dispatch<React.SetStateAction<ShapesType>>,
+
+  modifiedShapes: ShapesType[],
+  setModifiedShapes: React.Dispatch<React.SetStateAction<ShapesType[]>>,
+
   svgWidth: number,
   svgHeight: number,
 
@@ -54,7 +58,7 @@ export function drawCircle(
     // Label for the circle
     circleGroup
       .append("text")
-      .attr("x", posX )
+      .attr("x", posX)
       .attr("y", posY - 15)
       .attr("text-anchor", "middle")
       .attr("font-size", 10)
