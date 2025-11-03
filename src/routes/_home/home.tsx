@@ -19,27 +19,39 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PanelComponents } from "@/components/panel-components";
 import { PanelComponentDetails } from "@/components/panel-details";
 import type { ShapesType } from "@/components/types/map";
-import { Elements } from "@/lib/mock-data/mock-data";
+
+import Elements from "@/lib/mock-data/elements.json";
+
 export const Route = createFileRoute("/_home/home")({
   component: home,
 });
 
 export function home() {
   const [isModify, setIsModify] = useState(false);
-  const [showElements, setshowElements] = useState(true);
-  const [showElementInfos, setshowElementInfos] = useState(true);
+  const [showElements, setshowElements] = useState(false);
+  const [showElementInfos, setshowElementInfos] = useState(false);
+
+  /* Store Elements that has changes */
+  const [pendingElements, setPendingElements] = useState<ShapesType[]>([]);
 
   /* Elements stats */
-  const [elements, setElements] = useState<ShapesType>(Elements);
+  const [elements, setElements] = useState<ShapesType>(
+    Elements as unknown as ShapesType
+  );
   const [modifiedElements, setModifiedElements] = useState<ShapesType[]>([
-    Elements,
+    Elements as unknown as ShapesType,
   ]);
+
+  useEffect(() => {
+    //add elements x and y id
+  }, []);
 
   const toggleshowElements = () => {
     setshowElements((prev) => !prev);
@@ -47,6 +59,15 @@ export function home() {
 
   const toggleshowElementInfos = () => {
     setshowElementInfos((prev) => !prev);
+  };
+
+  const handleSave = () => {
+    try {
+      console.log("✅ JSON updated Elements: ", elements);
+      //console.log(JSON.stringify(elements, null, 2));
+    } catch (error) {
+      //console.error("❌ Failed to update JSON:", error);
+    }
   };
 
   const setMargin = () => {
@@ -106,7 +127,12 @@ export function home() {
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger className="cursor-pointer" asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Button
+                          onClick={handleSave}
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                        >
                           <Save className="h-4 w-4" />
                         </Button>
                       </TooltipTrigger>
@@ -206,8 +232,12 @@ export function home() {
                   showElements={showElements}
                   modifiedShapes={modifiedElements}
                   setModifiedShapes={setModifiedElements}
-                  shapes={elements}
-                  setShapes={setElements}
+                  elements={elements}
+                  setElements={setElements}
+                  /* for pending elements */
+
+                  pendingElements={pendingElements}
+                  setPendingElements={setPendingElements}
                 />
               </div>
             </CardContent>

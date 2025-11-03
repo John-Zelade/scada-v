@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type {
   GroupDragHandlerProps,
+  PipePoint,
   Pipes,
   SelectedComponent,
   WaterMeter,
@@ -139,21 +140,23 @@ export function drawGrid(
       .attr("stroke", `${mainGridLineColor}`)
       .attr("stroke-width", mainGridLineWidth);
 
-    gridGroup
-      .append("text")
-      .attr("x", x + 2)
-      .attr("y", 12)
-      .text(`${i}%`)
-      .attr("font-size", 10)
-      .attr("fill", "#999");
+    if (isModify) {
+      gridGroup
+        .append("text")
+        .attr("x", x + 2)
+        .attr("y", 12)
+        .text(`${i}%`)
+        .attr("font-size", 10)
+        .attr("fill", "#999");
 
-    gridGroup
-      .append("text")
-      .attr("x", 2)
-      .attr("y", y - 2)
-      .text(`${i}%`)
-      .attr("font-size", 10)
-      .attr("fill", "#999");
+      gridGroup
+        .append("text")
+        .attr("x", 2)
+        .attr("y", y - 2)
+        .text(`${i}%`)
+        .attr("font-size", 10)
+        .attr("fill", "#999");
+    }
   }
 }
 
@@ -185,12 +188,9 @@ export const createDragHandlers = <
 
       // special handling if type is pipe
       let updated: T;
-      if (d.type === "pipe") {
-        // assume getPosition returns a point of the pipe to drag
-        updated = updatePosition(d, x, y);
-      } else {
-        updated = updatePosition(d, x, y);
-      }
+
+      updated = updatePosition(d, x, y);
+
       setItem(d.id, updated);
       // Keep opacity at 0.6 during drag
       //d3.select(event.sourceEvent.target).style("opacity", 0.6);
@@ -224,7 +224,7 @@ export const GroupDragHandler = <T extends Pipes>({
       undefined
     >;
 
-    console.log(`pipeGroup`, pipeGroup);
+    //console.log(`pipeGroup`, pipeGroup);
 
     pipeGroup
       .insert("rect", ":first-child")
@@ -232,7 +232,7 @@ export const GroupDragHandler = <T extends Pipes>({
       .attr("y", 0)
       .attr("width", svgWidth)
       .attr("height", svgHeight)
-      .style("opacity", 0.05);
+      .style("opacity", 0.0); //set 0 to prevent black bg
 
     pipeGroup.call(
       d3
@@ -249,10 +249,10 @@ export const GroupDragHandler = <T extends Pipes>({
           const node = svg.node();
           if (!node) return;
 
-          console.log(`node list`, node);
+          //console.log(`node list`, node);
 
           const transform = d3.zoomTransform(node);
-          console.log(`transform`, transform);
+          //console.log(`transform`, transform);
 
           // Add pixel delta to each point
           const updatedPoints = pipe.points.map((p) => ({
@@ -271,7 +271,7 @@ export const GroupDragHandler = <T extends Pipes>({
 };
 
 export function toggleSelection(
-  data: WaterSupply | WaterMeter | Pipes,
+  data: WaterSupply | WaterMeter | Pipes | PipePoint,
   type: SelectedComponent["type"],
   setSelectedComponents: React.Dispatch<
     React.SetStateAction<SelectedComponent[]>

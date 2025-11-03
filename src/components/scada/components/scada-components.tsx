@@ -220,18 +220,40 @@ export function drawPipe(
 
     // Drag handles per point
     pipeGroup
-      .selectAll<SVGRectElement, PipePoint>("rect.drag-handle")
+      .selectAll<SVGRectElement, PipePoint>("rect.connection-point")
       .data(pipe.points)
       .join("rect")
-      .attr("class", "drag-handle")
+      .attr("class", "connection-point")
       .attr("width", size)
       .attr("height", size)
-      .attr("fill", "#fff")
-      .attr("stroke", "#007bff")
+
       .style("cursor", "pointer")
       .style("display", isModify ? "block" : "none")
       .attr("x", (d) => (d.x / 100) * svgWidth - size / 2)
       .attr("y", (d) => (d.y / 100) * svgHeight - size / 2)
+      .style("opacity", (d) => {
+        return isSelected(selectedComponents, d.id, "connection-point")
+          ? 0.6
+          : 1;
+      })
+      .attr("fill", (d) =>
+        isSelected(selectedComponents, d.id, "connection-point")
+          ? "#007bff" // bright blue fill when selected
+          : "#ffffff"
+      )
+      .attr("stroke", (d) =>
+        isSelected(selectedComponents, d.id, "connection-point")
+          ? "#ff4757" // red border to stand out
+          : "#007bff"
+      )
+      .attr("stroke-width", (d) =>
+        isSelected(selectedComponents, d.id, "connection-point") ? 1.5 : 1
+      )
+      .on("mousedown", (event) => event.stopPropagation())
+      .on("click", (event, d) => {
+        event.stopPropagation();
+        toggleSelection(d, "connection-point", setSelectedComponents);
+      })
       .call(
         createDragHandlers<SVGRectElement, PipePoint>(
           svg,

@@ -1,16 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
-import WaterBranch from "../../assets/water-branch.png";
 
 import { KeyCntrls } from "./key-ctrls";
-import { toggleSelection } from "./util";
 import {
   drawPipe,
   drawWaterMeter,
   drawWaterSupply,
 } from "./components/scada-components";
 import {
-  water_pipes,
   water_meters,
   water_supply,
   Elements,
@@ -25,24 +22,15 @@ import type {
 } from "../types/map";
 import { drawCircle } from "./components/shapes/circle";
 
-// Types
-interface PipePoint {
-  x: number;
-  y: number;
-  linkedMeterId?: string;
-}
-
-interface PipeData {
-  id: string;
-  points: PipePoint[];
-}
-
 interface SCADAMapProps {
   modifiedShapes: ShapesType[];
   setModifiedShapes: React.Dispatch<React.SetStateAction<ShapesType[]>>;
 
-  shapes: ShapesType;
-  setShapes: React.Dispatch<React.SetStateAction<ShapesType>>;
+  elements: ShapesType;
+  setElements: React.Dispatch<React.SetStateAction<ShapesType>>;
+
+  pendingElements: ShapesType[];
+  setPendingElements: React.Dispatch<React.SetStateAction<ShapesType[]>>;
 
   isModify: boolean;
   showElements: boolean;
@@ -56,16 +44,19 @@ export function SCADAMap({
   modifiedShapes,
   setModifiedShapes,
 
-  shapes,
-  setShapes,
+  elements,
+  setElements,
+
+  pendingElements,
+  setPendingElements,
 
   isModify,
   showElements,
   width = 600,
   height = 400,
 }: SCADAMapProps) {
-  console.log(`modifiedShapes: `, modifiedShapes);
-  console.log(`shapes: `, shapes);
+  //console.log(`modifiedShapes: `, modifiedShapes);
+  //console.log(`elements: `, elements);
 
   const svgRef = useRef<SVGSVGElement>(null);
   const [dimensions, setDimensions] = useState({ width, height });
@@ -82,17 +73,17 @@ export function SCADAMap({
   const [selectedComponents, setSelectedComponents] = useState<
     SelectedComponent[]
   >([]);
+  console.log(`selectedComponents`, selectedComponents);
 
   const [selectedPipe, setSelectedPipe] = useState<string | null>(null);
 
   // Pipes stored data
-  const [pipes, setPipes] = useState(water_pipes.pipes);
+  //const [pipes, setPipes] = useState(water_pipes.pipes);
   const [supplies, setSupplies] = useState<WaterSupply[]>(water_supply.supply); // water supply
   const [meters, setMeters] = useState<WaterMeter[]>(water_meters.meters); // water meter
 
   //console.log(`panelPos`, panelPos);
   //console.log(`meters`, meters);
-  //console.log(`pipes`, pipes);
   //console.log(`supplies`, supplies);
   useEffect(() => {
     const moveListener = (e: MouseEvent) =>
@@ -109,12 +100,6 @@ export function SCADAMap({
       window.removeEventListener("mouseup", upListener);
     };
   }, [isDragging]);
-
-  const handleSetPipePoints = (id: string, points: PipePoint[]) => {
-    setPipes((prev) =>
-      prev.map((pipe) => (pipe.id === id ? { ...pipe, points } : pipe))
-    );
-  };
 
   useEffect(() => {
     if (!svgRef.current) return;
@@ -142,7 +127,7 @@ export function SCADAMap({
     window.addEventListener("resize", update);
 
     return () => window.removeEventListener("resize", update);
-  }, []);
+  }, [isModify]);
 
   /* Handles Zoom and Pan */
   useEffect(() => {
@@ -151,15 +136,32 @@ export function SCADAMap({
     const svg = d3.select(svgRef.current);
     const g = svg.select(".zoom-layer");
 
-    svg.call(
-      d3
-        .zoom<SVGSVGElement, unknown>()
-        .scaleExtent([0.1, 100]) // zoom range
-        .on("zoom", (event) => {
-          g.attr("transform", event.transform);
-        })
-    );
-  }, []);
+    const enabledZoomOut = d3
+      .zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.1, 100]) // allow zoom out more
+      .on("zoom", (event) => {
+        g.attr("transform", event.transform);
+      });
+
+    const zoom = d3
+      .zoom<SVGSVGElement, unknown>()
+      .scaleExtent([1, 100]) // restrict min zoom
+      .on("zoom", (event) => {
+        const { k: scale, x, y } = event.transform;
+
+        // When scale = 1, ignore translate so user can't pan
+        if (scale <= 1) {
+          g.attr("transform", `scale(1)`);
+        } else {
+          g.attr("transform", `translate(${x}, ${y}) scale(${scale})`);
+        }
+      });
+
+    // Clear any previous zoom handlers before reapplying
+    svg.on(".zoom", null);
+
+    svg.call(isModify ? enabledZoomOut : zoom);
+  }, [isModify]);
 
   // Draw Shape Components
   useEffect(() => {
@@ -169,8 +171,8 @@ export function SCADAMap({
     // Clear or draw per shape type
     drawCircle(
       svg,
-      shapes,
-      setShapes,
+      elements,
+      setElements,
 
       modifiedShapes,
       setModifiedShapes,
@@ -181,95 +183,33 @@ export function SCADAMap({
       selectedComponents,
       setSelectedComponents
     );
-  }, [shapes, dimensions, isModify, selectedComponents]);
-
-  /* This used to zoom and grad whole pipe */
-  /* useEffect(() => {
-    if (!svgRef.current) return;
-    const svg = d3.select(svgRef.current);
-
-    // Apply zoom behavior
-    svg.call(
-      d3
-        .zoom<SVGSVGElement, unknown>()
-        .scaleExtent([1e-5, 1e5])
-        .on("zoom", (event) => {
-          if (!selectedPipe) return;
-
-          // Apply the transform to the pipe group
-          svg
-            .selectAll(`.pipe-group-${selectedPipe}`)
-            .attr("transform", event.transform);
-
-          // Extract translation
-          const { x, y, k } = event.transform;
-
-          // Get pipe points after transformation
-          const pipeGroup = svg.selectAll<SVGGElement, unknown>(
-            `.pipe-group-${selectedPipe}`
-          );
-
-          const points: { x: number; y: number }[] = [];
-          pipeGroup.selectAll("polyline.pipe-inner").each(function () {
-            const pl = this as SVGPolylineElement;
-            const pts = pl.points;
-            for (let i = 0; i < pts.numberOfItems; i++) {
-              points.push({
-                x: ((pts.getItem(i).x * k + x) / dimensions.width) * 100,
-                y: ((pts.getItem(i).y * k + y) / dimensions.height) * 100,
-              });
-            }
-          });
-
-          // ✅ Log the points in a readable way
-          console.log(`Pipe "${selectedPipe}" moved:`);
-          points.forEach((p, i) => {
-            console.log(
-              `  Point ${i + 1}: x=${p.x.toFixed(4)}, y=${p.y.toFixed(4)}`
-            );
-          });
-        })
-    );
-  }, [selectedPipe]); */
-
-  /* ======================================================= */
-  /*                   Handles Key Ctrls                     */
-  /* ======================================================= */
-  /* useEffect(() => {
-    const keyControl = new KeyCntrls(
-      () => selectedSupply,
-      () => supplies,
-      (id, updated) =>
-        setSupplies((prev) => prev.map((s) => (s.id === id ? updated : s)))
-    );
-
-    return () => keyControl.destroy();
-  }, [selectedSupply, supplies]); */
+  }, [elements, dimensions, isModify, selectedComponents]);
 
   // Draw pipes
   useEffect(() => {
     if (!svgRef.current) return;
-    const svg = d3.select(svgRef.current);
-    const pipesWithIds = pipes.map((pipe) => ({
-      ...pipe,
-      points: pipe.points.map((p, idx) => ({
-        ...p,
-        id: `${pipe.id}-pt${idx}`, // unique ID per point
-      })),
-    }));
 
+    const svg = d3.select(svgRef.current);
+
+    // Safely extract pipe elements from the 'elements' state
+    const pipeElements = elements?.pipe || [];
+
+    // Draw pipes
     drawPipe(
       svg,
-      pipesWithIds,
-      (id, pipe) =>
-        setPipes((prev) => prev.map((p) => (p.id === id ? pipe : p))),
+      pipeElements,
+      (id, updatedPipe) =>
+        setElements((prev) => ({
+          ...prev,
+          pipe: prev.pipe.map((p) => (p.id === id ? updatedPipe : p)),
+        })),
       dimensions.width,
       dimensions.height,
       isModify,
       selectedComponents,
       setSelectedComponents
     );
-  }, [pipes, dimensions, isModify, selectedComponents]);
+  }, [elements, dimensions, isModify, selectedComponents]);
 
   // Draw meters
   useEffect(() => {
@@ -309,19 +249,40 @@ export function SCADAMap({
 
   // Add new pipe dynamically
   const addPipe = () => {
-    const pipeCount = pipes.length + 1; // next pipe number
-    const newPipe = {
-      id: `pipe${pipeCount}`,
-      points: [
-        { x: 20, y: 30 }, // start point
+    setElements((prev) => {
+      // make sure 'pipe' array exists
+      const existingPipes = prev.pipe || [];
+      const pipeCount = existingPipes.length + 1;
 
-        { x: 50, y: 30 }, // end
-      ],
-    };
+      const newPipe = {
+        id: `pipe${pipeCount}`,
+        points: [
+          { id: `${pipeCount}-p0`, x: 20, y: 30 }, // start point
+          { id: `${pipeCount}-p1`, x: 50, y: 30 }, // end point
+        ],
+      };
 
-    // Append to pipes array
-    setPipes((prev: typeof water_pipes.pipes) => [...prev, newPipe]);
+      // return new state with added pipe
+      return {
+        ...prev,
+        pipe: [...existingPipes, newPipe],
+      };
+    });
   };
+
+  /* Move element using arrow key */
+
+  useEffect(() => {
+    const keyControls = new KeyCntrls(
+      () => selectedComponents,
+      setElements,
+      0.1,
+      setSelectedComponents,
+      () => isModify
+    );
+
+    return () => keyControls.destroy();
+  }, [selectedComponents, isModify]);
 
   // Add this inside your SCADAMap component
 
@@ -329,20 +290,28 @@ export function SCADAMap({
   const duplicatePipe = () => {
     if (!selectedPipe) return;
 
-    const pipeToDuplicate = pipes.find((p) => p.id === selectedPipe);
-    if (!pipeToDuplicate) return;
+    setElements((prev) => {
+      const pipes = prev.pipe || [];
+      const original = pipes.find((p) => p.id === selectedPipe);
+      if (!original) return prev;
 
-    const pipeCount = pipes.length + 1;
-    const duplicatedPipe: PipeData = {
-      id: `pipe${pipeCount}`,
-      points: pipeToDuplicate.points.map((p) => ({
-        x: p.x + 5, // small offset so it doesn't overlap
-        y: p.y + 5,
-      })),
-    };
+      const newId = `pipe${pipes.length + 1}`;
+      const duplicated = {
+        id: newId,
+        points: original.points.map((point: any) => ({
+          id: point.id,
+          x: point.x + 2, // small offset to avoid overlap
+          y: point.y + 2,
+        })),
+      };
 
-    setPipes((prev) => [...prev, duplicatedPipe]);
-    setSelectedPipe(duplicatedPipe.id); // automatically select new pipe
+      return {
+        ...prev,
+        pipe: [...pipes, duplicated],
+      };
+    });
+
+    setSelectedPipe(() => `pipe${Elements.pipe.length + 1}`);
   };
 
   // Add keyboard listener for Ctrl+D
@@ -356,9 +325,9 @@ export function SCADAMap({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedPipe, pipes]);
+  }, [selectedPipe, elements]);
 
-  // Handle click on canvas for placing new elements
+  // Handle click on canvas for placing new pipe points
   const handleSvgClick = (event: React.MouseEvent<SVGSVGElement>) => {
     if (selectedTool !== "pipe" || !selectedPipe) return;
 
@@ -368,13 +337,24 @@ export function SCADAMap({
     const x = ((event.clientX - rect.left) / rect.width) * 100;
     const y = ((event.clientY - rect.top) / rect.height) * 100;
 
-    setPipes((prevPipes) =>
-      prevPipes.map((pipe) =>
-        pipe.id === selectedPipe
-          ? { ...pipe, points: [...pipe.points, { x, y }] }
-          : pipe
-      )
-    );
+    setElements((prev) => {
+      const updatedPipes = prev.pipe.map((pipe) => {
+        if (pipe.id === selectedPipe) {
+          const newPoint = {
+            id: `${pipe.id}-p${pipe.points.length + 1}`, // auto-generate point ID
+            x,
+            y,
+          };
+          return { ...pipe, points: [...pipe.points, newPoint] };
+        }
+        return pipe;
+      });
+
+      return {
+        ...prev,
+        pipe: updatedPipes,
+      };
+    });
   };
 
   return (

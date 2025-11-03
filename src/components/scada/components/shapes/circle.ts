@@ -1,10 +1,12 @@
 import type {
   SelectedComponent,
   Shape,
+  ShapeItem,
   ShapesType,
 } from "@/components/types/map";
 import * as d3 from "d3";
-import { createDragHandlers } from "../../util";
+import { createDragHandlers, toggleSelection } from "../../util";
+import { isSelected } from "../../helper";
 
 export function drawCircle(
   svg: d3.Selection<SVGSVGElement, unknown, null, undefined>,
@@ -24,7 +26,7 @@ export function drawCircle(
     React.SetStateAction<SelectedComponent[]>
   >
 ) {
-  console.log(`Circle: `, shapes.circle);
+  //console.log(`Circle: `, shapes.circle);
 
   //Clear old circles before re-drawing
   svg.selectAll(".circle-group").remove();
@@ -51,9 +53,20 @@ export function drawCircle(
       .attr("cy", posY)
       .attr("r", radius) // ✅ you need a radius for visibility
       .attr("fill", "#ffffff9d") // ✅ add fill or stroke
-      .attr("stroke", "#2b2c2cff")
-      .attr("stroke-width", 0.5)
-      .style("cursor", isModify ? "move" : "pointer");
+      .attr("stroke", () =>
+        isSelected(selectedComponents, circle.id, "circle")
+          ? "#007bff"
+          : "#2b2c2cff"
+      )
+      .attr("stroke-width", () =>
+        isSelected(selectedComponents, circle.id, "circle") ? 1 : 0.5
+      )
+      .style("cursor", isModify ? "move" : "pointer")
+      .on("mousedown", (event) => event.stopPropagation())
+      .on("click", (event) => {
+        event.stopPropagation();
+        toggleSelection(circle, "circle", setSelectedComponents);
+      });
 
     // Label for the circle
     circleGroup
@@ -65,14 +78,50 @@ export function drawCircle(
       .attr("fill", "#000")
       .text(circle.id);
 
+    // ✅ Draw resize handles if selected
+    const isCircleSelected = isSelected(
+      selectedComponents,
+      circle.id,
+      "circle"
+    );
+    if (isCircleSelected) {
+      const handleSize = 6;
+
+      const handleOffsets = [
+        [-radius, -radius],
+        [0, -radius],
+        [radius, -radius],
+        [-radius, 0],
+        [radius, 0],
+        [-radius, radius],
+        [0, radius],
+        [radius, radius],
+      ];
+
+      const handles = circleGroup
+        .selectAll(".resize-handle")
+        .data(handleOffsets)
+        .join("rect")
+        .attr("class", "resize-handle")
+        .attr("x", (d) => posX + d[0] - handleSize / 2)
+        .attr("y", (d) => posY + d[1] - handleSize / 2)
+        .attr("width", handleSize)
+        .attr("height", handleSize)
+        .attr("fill", "#007bff")
+        .attr("stroke", "#fff")
+        .attr("stroke-width", 1)
+        .style("cursor", "nwse-resize")
+        .style("opacity", 0.8);
+    }
+
     // Enable drag if modification mode is on
     if (isModify) {
-      const drag = createDragHandlers<SVGCircleElement, Shape>(
+      const drag = createDragHandlers<SVGCircleElement, ShapeItem>(
         svg,
         (d) => d.points[0], // ✅ returns current x/y position
         (d, x, y) => ({
           ...d,
-          points: [{ x, y }, ...d.points.slice(1)], // ✅ updates the first point
+          points: [{ ...d.points[0], x, y }, ...d.points.slice(1)], // ✅ updates the first point
         }),
         (
           id,

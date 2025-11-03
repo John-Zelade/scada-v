@@ -1,8 +1,321 @@
 import type { Rectangle } from "recharts";
 
-export const water_pipes = {
-  type: "pipe",
-  pipes: [
+export const water_meters = {
+  type: "water-meter",
+  meters: [
+    {
+      id: "Meter1",
+      type: "water-meter",
+      points: [{ x: 22.439278885465892, y: 10.074072943793402 }],
+    },
+    {
+      id: "Meter2",
+      type: "water-meter",
+      points: [{ x: 22.518476346042632, y: 21.407406277126736 }],
+    },
+    {
+      id: "Meter3",
+      type: "water-meter",
+      points: [{ x: 22.518476346042632, y: 36.518517388237846 }],
+    },
+    {
+      id: "Meter4",
+      type: "water-meter",
+      points: [{ x: 39.14994306715755, y: 44.96296183268229 }],
+    },
+    {
+      id: "Meter5",
+      type: "water-meter",
+      points: [{ x: 30.59661732486988, y: 47.18518405490452 }],
+    },
+    {
+      id: "Meter6",
+      type: "water-meter",
+      points: [{ x: 30.51741986429314, y: 9.85185072157118 }],
+    },
+    {
+      id: "Meter7",
+      type: "water-meter",
+      points: [{ x: 30.675814785446615, y: 16.518517388237846 }],
+    },
+    {
+      id: "Meter8",
+      type: "water-meter",
+      points: [{ x: 30.675814785446615, y: 40.962961832682296 }],
+    },
+    {
+      id: "Meter9",
+      type: "water-meter",
+      points: [{ x: 22.518476346042632, y: 52.074072943793404 }],
+    },
+    {
+      id: "Meter10",
+      type: "water-meter",
+      points: [{ x: 39.14994306715755, y: 51.629628499348954 }],
+    },
+    {
+      id: "Meter11",
+      type: "water-meter",
+      points: [{ x: 39.54593037004124, y: 8.962961832682291 }],
+    },
+    {
+      id: "Meter12",
+      type: "water-meter",
+      points: [{ x: 39.54593037004124, y: 17.407406277126736 }],
+    },
+    {
+      id: "Meter13",
+      type: "water-meter",
+      points: [{ x: 47.148886585408064, y: 44.96296183268229 }],
+    },
+    {
+      id: "Meter14",
+      type: "water-meter",
+      points: [{ x: 47.2280840459848, y: 52.074072943793404 }],
+    },
+    {
+      id: "Meter15",
+      type: "water-meter",
+      points: [{ x: 39.14994306715755, y: 57.851847330729164 }],
+    },
+    {
+      id: "Meter16",
+      type: "water-meter",
+      points: [{ x: 49.36641548155672, y: 9.185184054904513 }],
+    },
+    {
+      id: "Meter17",
+      type: "water-meter",
+      points: [{ x: 49.36641548155672, y: 17.85185072157118 }],
+    },
+    {
+      id: "Meter18",
+      type: "water-meter",
+      points: [{ x: 30.675814785446615, y: 56.29629516601562 }],
+    },
+    {
+      id: "Meter19",
+      type: "water-meter",
+      points: [{ x: 47.2280840459848, y: 58.296291775173614 }],
+    },
+    {
+      id: "Meter20",
+      type: "water-meter",
+      points: [{ x: 22.439278885465892, y: 66.74073621961806 }],
+    },
+    {
+      id: "Meter21",
+      type: "water-meter",
+      points: [{ x: 59.26609805364893, y: 18.074072943793404 }],
+    },
+    {
+      id: "Meter22",
+      type: "water-meter",
+      points: [{ x: 39.54593037004124, y: 26.296295166015625 }],
+    },
+    {
+      id: "Meter23",
+      type: "water-meter",
+      points: [{ x: 30.675814785446615, y: 66.29629177517361 }],
+    },
+    {
+      id: "Meter24",
+      type: "water-meter",
+      points: [{ x: 31.705381772944207, y: 75.62962510850694 }],
+    },
+    {
+      id: "Meter25",
+      type: "water-meter",
+      points: [{ x: 40.258707515231876, y: 75.1851806640625 }],
+    },
+    {
+      id: "Meter26",
+      type: "water-meter",
+      points: [{ x: 30.675814785446615, y: 25.85185072157118 }],
+    },
+    {
+      id: "Meter27",
+      type: "water-meter",
+      points: [{ x: 49.36641548155672, y: 26.296295166015625 }],
+    },
+    {
+      id: "Meter28",
+      type: "water-meter",
+      points: [{ x: 38.59556084312039, y: 66.29629177517361 }],
+    },
+    {
+      id: "Meter29",
+      type: "water-meter",
+      points: [{ x: 48.89123071809629, y: 75.1851806640625 }],
+    },
+    {
+      id: "Meter30",
+      type: "water-meter",
+      points: [{ x: 57.36535899980723, y: 74.96295844184027 }],
+    },
+    {
+      id: "Meter31",
+      type: "water-meter",
+      points: [{ x: 65.99788220267165, y: 86.0740695529514 }],
+    },
+    {
+      id: "Meter32",
+      type: "water-meter",
+      points: [{ x: 30.675814785446615, y: 31.62962849934896 }],
+    },
+    {
+      id: "Meter33",
+      type: "water-meter",
+      points: [{ x: 79.1446606584101, y: 79.1851806640625 }],
+    },
+    {
+      id: "Meter34",
+      type: "water-meter",
+      points: [{ x: 74.5512079449593, y: 74.96295844184027 }],
+    },
+    {
+      id: "Meter35",
+      type: "water-meter",
+      points: [{ x: 65.99788220267165, y: 74.74073621961806 }],
+    },
+    {
+      id: "Meter36",
+      type: "water-meter",
+      points: [{ x: 22.59767380661937, y: 79.62962510850694 }],
+    },
+    {
+      id: "Meter37",
+      type: "water-meter",
+      points: [{ x: 31.626184312367467, y: 86.51851399739583 }],
+    },
+    {
+      id: "Meter38",
+      type: "water-meter",
+      points: [{ x: 40.417102436385356, y: 86.2962917751736 }],
+    },
+    {
+      id: "Meter39",
+      type: "water-meter",
+      points: [{ x: 48.89123071809629, y: 86.51851399739583 }],
+    },
+    {
+      id: "Meter40",
+      type: "water-meter",
+      points: [{ x: 57.286161539230484, y: 86.2962917751736 }],
+    },
+    {
+      id: "Meter41",
+      type: "water-meter",
+      points: [{ x: 22.439278885465892, y: 91.40740288628473 }],
+    },
+  ],
+};
+
+export const water_supply = {
+  type: "water-supply",
+  supply: [
+    {
+      id: "Supply1",
+      points: [{ x: 18.083419762202663, y: 89.40740288628473 }],
+    },
+    {
+      id: "Supply2",
+      points: [{ x: 35.19007003832066, y: 24.518517388237846 }],
+    },
+    {
+      id: "Supply3",
+      points: [{ x: 35.03167511716719, y: 15.851850721571182 }],
+    },
+    {
+      id: "Supply4",
+      points: [{ x: 35.03167511716719, y: 7.629628499348959 }],
+    },
+    {
+      id: "Supply5",
+      points: [{ x: 18.1626172227794, y: 77.85184733072916 }],
+    },
+    {
+      id: "Supply6",
+      points: [{ x: 18.004222301625926, y: 64.96295844184029 }],
+    },
+    {
+      id: "Supply7",
+      points: [{ x: 18.004222301625926, y: 49.851850721571175 }],
+    },
+    {
+      id: "Supply8",
+      points: [{ x: 18.004222301625926, y: 34.518517388237846 }],
+    },
+    {
+      id: "Supply9",
+      points: [{ x: 54.51425041904467, y: 15.851850721571182 }],
+    },
+    {
+      id: "Supply10",
+      points: [{ x: 18.004222301625926, y: 19.629628499348957 }],
+    },
+    {
+      id: "Supply11",
+      points: [{ x: 18.083419762202663, y: 8.296295166015625 }],
+    },
+    {
+      id: "Supply12",
+      points: [{ x: 44.614567846952454, y: 7.407406277126737 }],
+    },
+    {
+      id: "Supply13",
+      points: [{ x: 44.77296276810593, y: 15.851850721571182 }],
+    },
+    {
+      id: "Supply14",
+      points: [{ x: 44.77296276810593, y: 24.518517388237846 }],
+    },
+  ],
+};
+
+export const Elements = {
+  // Basic geometric shapes
+  circle: [
+    { id: "circle01", points: [{ x: 10, y: 10 }] },
+    { id: "circle02", points: [{ x: 10, y: 20 }] },
+  ],
+
+  rect: [
+    { id: "rect01", points: [{ x: 5, y: 5 }] },
+    { id: "rect02", points: [{ x: 15, y: 15 }] },
+  ],
+
+  line: [
+    {
+      id: "line01",
+      points: [
+        { x: 10, y: 10 },
+        { x: 40, y: 10 },
+      ],
+    },
+  ],
+
+  polygon: [
+    {
+      id: "poly01",
+      points: [
+        { x: 10, y: 10 },
+        { x: 20, y: 20 },
+        { x: 15, y: 30 },
+      ],
+    },
+  ],
+
+  // SCADA-specific components
+  valve: [
+    { id: "valve01", points: [{ x: 30, y: 30 }] }, // manual or motorized valve
+  ],
+
+  pump: [{ id: "pump01", points: [{ x: 50, y: 50 }] }],
+
+  tank: [{ id: "tank01", points: [{ x: 60, y: 20 }] }],
+
+  pipe: [
     {
       id: "pipe1",
       points: [
@@ -544,333 +857,6 @@ export const water_pipes = {
       points: [
         { x: 20.459342371047452, y: 66.96295844184029 },
         { x: 21.80569920085199, y: 66.74073621961806 },
-      ],
-    },
-  ],
-};
-
-export const water_meters = {
-  type: "water-meter",
-  meters: [
-    {
-      id: "Meter1",
-      type: "water-meter",
-      points: [{ x: 22.439278885465892, y: 10.074072943793402 }],
-    },
-    {
-      id: "Meter2",
-      type: "water-meter",
-      points: [{ x: 22.518476346042632, y: 21.407406277126736 }],
-    },
-    {
-      id: "Meter3",
-      type: "water-meter",
-      points: [{ x: 22.518476346042632, y: 36.518517388237846 }],
-    },
-    {
-      id: "Meter4",
-      type: "water-meter",
-      points: [{ x: 39.14994306715755, y: 44.96296183268229 }],
-    },
-    {
-      id: "Meter5",
-      type: "water-meter",
-      points: [{ x: 30.59661732486988, y: 47.18518405490452 }],
-    },
-    {
-      id: "Meter6",
-      type: "water-meter",
-      points: [{ x: 30.51741986429314, y: 9.85185072157118 }],
-    },
-    {
-      id: "Meter7",
-      type: "water-meter",
-      points: [{ x: 30.675814785446615, y: 16.518517388237846 }],
-    },
-    {
-      id: "Meter8",
-      type: "water-meter",
-      points: [{ x: 30.675814785446615, y: 40.962961832682296 }],
-    },
-    {
-      id: "Meter9",
-      type: "water-meter",
-      points: [{ x: 22.518476346042632, y: 52.074072943793404 }],
-    },
-    {
-      id: "Meter10",
-      type: "water-meter",
-      points: [{ x: 39.14994306715755, y: 51.629628499348954 }],
-    },
-    {
-      id: "Meter11",
-      type: "water-meter",
-      points: [{ x: 39.54593037004124, y: 8.962961832682291 }],
-    },
-    {
-      id: "Meter12",
-      type: "water-meter",
-      points: [{ x: 39.54593037004124, y: 17.407406277126736 }],
-    },
-    {
-      id: "Meter13",
-      type: "water-meter",
-      points: [{ x: 47.148886585408064, y: 44.96296183268229 }],
-    },
-    {
-      id: "Meter14",
-      type: "water-meter",
-      points: [{ x: 47.2280840459848, y: 52.074072943793404 }],
-    },
-    {
-      id: "Meter15",
-      type: "water-meter",
-      points: [{ x: 39.14994306715755, y: 57.851847330729164 }],
-    },
-    {
-      id: "Meter16",
-      type: "water-meter",
-      points: [{ x: 49.36641548155672, y: 9.185184054904513 }],
-    },
-    {
-      id: "Meter17",
-      type: "water-meter",
-      points: [{ x: 49.36641548155672, y: 17.85185072157118 }],
-    },
-    {
-      id: "Meter18",
-      type: "water-meter",
-      points: [{ x: 30.675814785446615, y: 56.29629516601562 }],
-    },
-    {
-      id: "Meter19",
-      type: "water-meter",
-      points: [{ x: 47.2280840459848, y: 58.296291775173614 }],
-    },
-    {
-      id: "Meter20",
-      type: "water-meter",
-      points: [{ x: 22.439278885465892, y: 66.74073621961806 }],
-    },
-    {
-      id: "Meter21",
-      type: "water-meter",
-      points: [{ x: 59.26609805364893, y: 18.074072943793404 }],
-    },
-    {
-      id: "Meter22",
-      type: "water-meter",
-      points: [{ x: 39.54593037004124, y: 26.296295166015625 }],
-    },
-    {
-      id: "Meter23",
-      type: "water-meter",
-      points: [{ x: 30.675814785446615, y: 66.29629177517361 }],
-    },
-    {
-      id: "Meter24",
-      type: "water-meter",
-      points: [{ x: 31.705381772944207, y: 75.62962510850694 }],
-    },
-    {
-      id: "Meter25",
-      type: "water-meter",
-      points: [{ x: 40.258707515231876, y: 75.1851806640625 }],
-    },
-    {
-      id: "Meter26",
-      type: "water-meter",
-      points: [{ x: 30.675814785446615, y: 25.85185072157118 }],
-    },
-    {
-      id: "Meter27",
-      type: "water-meter",
-      points: [{ x: 49.36641548155672, y: 26.296295166015625 }],
-    },
-    {
-      id: "Meter28",
-      type: "water-meter",
-      points: [{ x: 38.59556084312039, y: 66.29629177517361 }],
-    },
-    {
-      id: "Meter29",
-      type: "water-meter",
-      points: [{ x: 48.89123071809629, y: 75.1851806640625 }],
-    },
-    {
-      id: "Meter30",
-      type: "water-meter",
-      points: [{ x: 57.36535899980723, y: 74.96295844184027 }],
-    },
-    {
-      id: "Meter31",
-      type: "water-meter",
-      points: [{ x: 65.99788220267165, y: 86.0740695529514 }],
-    },
-    {
-      id: "Meter32",
-      type: "water-meter",
-      points: [{ x: 30.675814785446615, y: 31.62962849934896 }],
-    },
-    {
-      id: "Meter33",
-      type: "water-meter",
-      points: [{ x: 79.1446606584101, y: 79.1851806640625 }],
-    },
-    {
-      id: "Meter34",
-      type: "water-meter",
-      points: [{ x: 74.5512079449593, y: 74.96295844184027 }],
-    },
-    {
-      id: "Meter35",
-      type: "water-meter",
-      points: [{ x: 65.99788220267165, y: 74.74073621961806 }],
-    },
-    {
-      id: "Meter36",
-      type: "water-meter",
-      points: [{ x: 22.59767380661937, y: 79.62962510850694 }],
-    },
-    {
-      id: "Meter37",
-      type: "water-meter",
-      points: [{ x: 31.626184312367467, y: 86.51851399739583 }],
-    },
-    {
-      id: "Meter38",
-      type: "water-meter",
-      points: [{ x: 40.417102436385356, y: 86.2962917751736 }],
-    },
-    {
-      id: "Meter39",
-      type: "water-meter",
-      points: [{ x: 48.89123071809629, y: 86.51851399739583 }],
-    },
-    {
-      id: "Meter40",
-      type: "water-meter",
-      points: [{ x: 57.286161539230484, y: 86.2962917751736 }],
-    },
-    {
-      id: "Meter41",
-      type: "water-meter",
-      points: [{ x: 22.439278885465892, y: 91.40740288628473 }],
-    },
-  ],
-};
-
-export const water_supply = {
-  type: "water-supply",
-  supply: [
-    {
-      id: "Supply1",
-      points: [{ x: 18.083419762202663, y: 89.40740288628473 }],
-    },
-    {
-      id: "Supply2",
-      points: [{ x: 35.19007003832066, y: 24.518517388237846 }],
-    },
-    {
-      id: "Supply3",
-      points: [{ x: 35.03167511716719, y: 15.851850721571182 }],
-    },
-    {
-      id: "Supply4",
-      points: [{ x: 35.03167511716719, y: 7.629628499348959 }],
-    },
-    {
-      id: "Supply5",
-      points: [{ x: 18.1626172227794, y: 77.85184733072916 }],
-    },
-    {
-      id: "Supply6",
-      points: [{ x: 18.004222301625926, y: 64.96295844184029 }],
-    },
-    {
-      id: "Supply7",
-      points: [{ x: 18.004222301625926, y: 49.851850721571175 }],
-    },
-    {
-      id: "Supply8",
-      points: [{ x: 18.004222301625926, y: 34.518517388237846 }],
-    },
-    {
-      id: "Supply9",
-      points: [{ x: 54.51425041904467, y: 15.851850721571182 }],
-    },
-    {
-      id: "Supply10",
-      points: [{ x: 18.004222301625926, y: 19.629628499348957 }],
-    },
-    {
-      id: "Supply11",
-      points: [{ x: 18.083419762202663, y: 8.296295166015625 }],
-    },
-    {
-      id: "Supply12",
-      points: [{ x: 44.614567846952454, y: 7.407406277126737 }],
-    },
-    {
-      id: "Supply13",
-      points: [{ x: 44.77296276810593, y: 15.851850721571182 }],
-    },
-    {
-      id: "Supply14",
-      points: [{ x: 44.77296276810593, y: 24.518517388237846 }],
-    },
-  ],
-};
-
-export const Elements = {
-  // Basic geometric shapes
-  circle: [
-    { id: "circle01", points: [{ x: 10, y: 10 }] },
-    { id: "circle02", points: [{ x: 10, y: 20 }] },
-  ],
- 
-  rect: [
-    { id: "rect01", points: [{ x: 5, y: 5 }] },
-    { id: "rect02", points: [{ x: 15, y: 15 }] },
-  ],
-
-  line: [
-    {
-      id: "line01",
-      points: [
-        { x: 10, y: 10 },
-        { x: 40, y: 10 },
-      ],
-    },
-  ],
-
-  polygon: [
-    {
-      id: "poly01",
-      points: [
-        { x: 10, y: 10 },
-        { x: 20, y: 20 },
-        { x: 15, y: 30 },
-      ],
-    },
-  ],
-
-  // SCADA-specific components
-  valve: [
-    { id: "valve01", points: [{ x: 30, y: 30 }] }, // manual or motorized valve
-  ],
-
-  pump: [{ id: "pump01", points: [{ x: 50, y: 50 }] }],
-
-  tank: [{ id: "tank01", points: [{ x: 60, y: 20 }] }],
-
-  pipe: [
-    {
-      id: "pipe01",
-      points: [
-        { x: 15, y: 20 },
-        { x: 35, y: 20 },
-        { x: 35, y: 40 },
       ],
     },
   ],
