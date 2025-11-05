@@ -27,7 +27,7 @@ import { PanelComponents } from "@/components/panel-components";
 import { PanelComponentDetails } from "@/components/panel-details";
 import type { ShapesType } from "@/components/types/map";
 
-import Elements from "@/lib/mock-data/elements.json";
+import Elements from "../../lib/mock-data/elements.json";
 
 export const Route = createFileRoute("/_home/home")({
   component: home,

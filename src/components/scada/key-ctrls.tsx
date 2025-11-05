@@ -57,7 +57,9 @@ export class KeyCntrls {
       const newSelectedComponents: SelectedComponent[] = [];
 
       selected.forEach(({ data, type }) => {
-        // ✅ Case 1: Has multiple points (pipe, circle, etc.)
+        //console.log(`key ctrl data: `, data);
+
+        //Has multiple points (pipe)
         if ("points" in data && Array.isArray(data.points)) {
           const movedPoints = data.points.map((p) => {
             switch (key) {
@@ -86,8 +88,8 @@ export class KeyCntrls {
           return;
         }
 
-        // ✅ Case 2: Connection point — must update parent pipe
-        if ("x" in data && "y" in data && data.id.includes("-pt")) {
+        //Connection point — selected connection point
+        if ("x" in data && "y" in data && data.id.includes("connection-pt")) {
           let newX = data.x;
           let newY = data.y;
 
@@ -106,8 +108,8 @@ export class KeyCntrls {
               break;
           }
 
-          // Extract parent pipe ID from point ID (e.g., "pipe1-pt2" → "pipe1")
-          const parentPipeId = data.id.split("-pt")[0];
+          // Extract parent pipe ID from point ID (e.g., "pipe1-connection-pt2" → "pipe1")
+          const parentPipeId = data.id.split("-connection-pt")[0];
 
           // Update that pipe’s corresponding point
           (updated as any).pipe = (prev as any).pipe.map((pipe: any) => {

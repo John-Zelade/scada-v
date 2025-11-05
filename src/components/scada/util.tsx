@@ -200,7 +200,7 @@ export const createDragHandlers = <
     });
 };
 
-export const GroupDragHandler = <T extends Pipes>({
+/* export const GroupDragHandler = <T extends Pipes>({
   svg,
   selectedComponents,
   pipes,
@@ -225,14 +225,6 @@ export const GroupDragHandler = <T extends Pipes>({
     >;
 
     //console.log(`pipeGroup`, pipeGroup);
-
-    pipeGroup
-      .insert("rect", ":first-child")
-      .attr("x", 0)
-      .attr("y", 0)
-      .attr("width", svgWidth)
-      .attr("height", svgHeight)
-      .style("opacity", 0.0); //set 0 to prevent black bg
 
     pipeGroup.call(
       d3
@@ -268,7 +260,7 @@ export const GroupDragHandler = <T extends Pipes>({
         })
     );
   });
-};
+}; */
 
 export function toggleSelection(
   data: WaterSupply | WaterMeter | Pipes | PipePoint,

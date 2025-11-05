@@ -73,18 +73,16 @@ export function SCADAMap({
   const [selectedComponents, setSelectedComponents] = useState<
     SelectedComponent[]
   >([]);
-  console.log(`selectedComponents`, selectedComponents);
+  //console.log(`selectedComponents`, selectedComponents);
+  // console.log(`elements:`, elements);
 
   const [selectedPipe, setSelectedPipe] = useState<string | null>(null);
 
   // Pipes stored data
   //const [pipes, setPipes] = useState(water_pipes.pipes);
   const [supplies, setSupplies] = useState<WaterSupply[]>(water_supply.supply); // water supply
-  const [meters, setMeters] = useState<WaterMeter[]>(water_meters.meters); // water meter
+  //const [meters, setMeters] = useState<WaterMeter[]>(water_meters.meters); // water meter
 
-  //console.log(`panelPos`, panelPos);
-  //console.log(`meters`, meters);
-  //console.log(`supplies`, supplies);
   useEffect(() => {
     const moveListener = (e: MouseEvent) =>
       handleMouseMove({ e, isDragging, setPanelPos, dragOffset, dimensions });
@@ -218,16 +216,19 @@ export function SCADAMap({
 
     drawWaterMeter(
       svg,
-      meters,
-      (id, meter) =>
-        setMeters((prev) => prev.map((m) => (m.id === id ? meter : m))),
+      elements,
+      setElements,
+
+      modifiedShapes,
+      setModifiedShapes,
+
       dimensions.width,
       dimensions.height,
       isModify,
       selectedComponents,
       setSelectedComponents
     );
-  }, [meters, dimensions, isModify, selectedComponents]);
+  }, [elements, dimensions, isModify, selectedComponents]);
 
   /* Draw Water Supply */
   useEffect(() => {
@@ -236,16 +237,19 @@ export function SCADAMap({
 
     drawWaterSupply(
       svg,
-      supplies,
-      (id, supply) =>
-        setSupplies((prev) => prev.map((s) => (s.id === id ? supply : s))),
+      elements,
+      setElements,
+
+      modifiedShapes,
+      setModifiedShapes,
+
       dimensions.width,
       dimensions.height,
       isModify,
       selectedComponents,
       setSelectedComponents
     );
-  }, [supplies, dimensions, isModify, selectedComponents]);
+  }, [elements, dimensions, isModify, selectedComponents]);
 
   // Add new pipe dynamically
   const addPipe = () => {
@@ -414,7 +418,7 @@ export function SCADAMap({
           display: "block",
         }}
       >
-        <g className="zoom-layer">
+        <g className="zoom-layer border">
           <g className="grid-layer" />
           <g className="map-layer" />
         </g>

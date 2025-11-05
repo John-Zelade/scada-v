@@ -58,6 +58,8 @@ export interface ShapesType {
   circle: ShapeItem[];
   rect: ShapeItem[];
   line: ShapeItem[];
+  ["water-meters"]: ShapeItem[];
+  ["water-supply"]: ShapeItem[];
   pipe: Pipes[];
   valve: ShapeItem[];
   pump: ShapeItem[];
@@ -68,5 +70,10 @@ export interface ShapesType {
 
 export type SelectedComponent = {
   data: WaterSupply | WaterMeter | Pipes | PipePoint | ShapeItem;
-  type: "water-supply" | "water-meter" | "pipe" | "circle" | "connection-point"; // extend if more types later
+  type:
+    | "water-supply"
+    | "water-meters"
+    | "pipe"
+    | "circle"
+    | "connection-point"; // extend if more types later
 };

@@ -3,13 +3,15 @@ import type {
   PipePoint,
   Pipes,
   SelectedComponent,
+  ShapeItem,
+  ShapesType,
   WaterMeter,
   WaterSupply,
 } from "../../types/map";
 
 import BX9 from "../../../assets/B39-water-meter.png";
 import WaterSupplyImg from "../../../assets/water_supply.png";
-import { GroupDragHandler, toggleSelection } from "../util";
+import { toggleSelection } from "../util";
 import { isSelected } from "../helper";
 import { createDragHandlers } from "../util";
 // Each pipe will track its own animation frame
@@ -19,7 +21,7 @@ const waterMeterAnimationFrames: Record<string, number> = {};
 export function drawPipe(
   svg: d3.Selection<SVGSVGElement, unknown, null, undefined>,
   pipes: Pipes[],
-  setPipes: (id: string, meter: Pipes) => void,
+  setPipes: (id: string, pipe: Pipes) => void,
   svgWidth: number,
   svgHeight: number,
 
@@ -51,17 +53,6 @@ export function drawPipe(
     // Stop only this pipe's previous animation
     if (pipeAnimationFrames[id]) {
       cancelAnimationFrame(pipeAnimationFrames[id]);
-    }
-
-    if (isModify && selectedComponents.length > 0) {
-      GroupDragHandler({
-        svg,
-        selectedComponents,
-        pipes,
-        setPipes,
-        svgWidth,
-        svgHeight,
-      });
     }
 
     const toPixel = (p: PipePoint) => {
@@ -127,19 +118,50 @@ export function drawPipe(
       .on("mousedown", (event) => event.stopPropagation())
       .on("click", (event) => {
         event.stopPropagation();
-        toggleSelection(pipe, "pipe", setSelectedComponents);
+        toggleSelection(pipe, "pipe", setSelectedComponents, true);
       });
 
-    // --- Flow effect ---
-    const totalLength = (polyline.node()?.getTotalLength() ?? 0) || 0;
+    polyline.call(
+      d3
+        .drag<SVGPolylineElement, Pipes>()
+        .on("start", (event, d) => {
+          if (!isModify || !isSelected(selectedComponents, d.id, "pipe"))
+            return;
+          event.sourceEvent.stopPropagation();
+          d3.select(event.sourceEvent.target).style("opacity", 0.6);
+        })
+        .on("drag", (event, d) => {
+          if (!isModify || !isSelected(selectedComponents, d.id, "pipe"))
+            return;
 
-    // Keep spacing constant in SVG coordinate space (independent of zoom)
-    const particleSpacing = 15;
-    let offset = 0;
-    const flowParticleCount = Math.max(
-      5,
-      Math.floor(totalLength / particleSpacing)
+          const dxPercent = (event.dx / svgWidth) * 100;
+          const dyPercent = (event.dy / svgHeight) * 100;
+
+          // Move only visually
+          d.points = d.points.map((p) => ({
+            ...p,
+            x: p.x + dxPercent,
+            y: p.y + dyPercent,
+          }));
+
+          setPipes(d.id, { ...d });
+        })
+        .on("end", (event, d) => {})
     );
+
+    // --- Flow effect ---
+    let totalLength = (polyline.node()?.getTotalLength() ?? 0) || 0;
+    //console.log(`total length : ${pipe.id}`, totalLength);
+
+    const minSpacing = 15; // minimum distance between particles
+    const minCount = 5; // minimum particles
+
+    let offset = 0;
+    // Compute particle count based on pipe length and spacing
+    let flowParticleCount =
+      totalLength < 30
+        ? 2
+        : Math.max(minCount, Math.floor(totalLength / minSpacing));
 
     // --- Particle size (responsive to SVG size + zoom) ---
     const baseParticleWidth = Math.min(svgWidth, svgHeight) * 0.013;
@@ -149,55 +171,58 @@ export function drawPipe(
     const adjustedParticleWidth = baseParticleWidth;
     const adjustedParticleHeight = baseParticleHeight;
 
-    // --- Create particle rectangles ---
-    const flowRects = Array.from({ length: flowParticleCount }).map(() =>
-      pipeGroup
-        .append("rect")
-        .attr("width", adjustedParticleWidth)
-        .attr("height", adjustedParticleHeight)
-        .attr("fill", "#4ac4f8ff")
-        .attr("rx", adjustedParticleHeight / 2)
-        .attr("ry", adjustedParticleHeight / 2)
-    );
+    // --- Create particle rectangles ---'
+    if (!isModify) {
+      const flowRects = Array.from({ length: flowParticleCount }).map(() =>
+        pipeGroup
+          .append("rect")
+          .attr("class", `water-flow`)
+          .attr("width", adjustedParticleWidth)
+          .attr("height", adjustedParticleHeight)
+          .attr("fill", "#4ac4f8ff")
+          .attr("rx", adjustedParticleHeight / 2)
+          .attr("ry", adjustedParticleHeight / 2)
+      );
 
-    // --- Animate flow ---
-    const animateFlow = () => {
-      if (!polyline.node()) return;
+      // --- Animate flow ---
+      const animateFlow = () => {
+        if (!polyline.node()) return;
 
-      if (isModify) {
-        flowRects.forEach((rect) => rect.attr("display", "none"));
-        return;
-      }
+        if (isModify) {
+          flowRects.forEach((rect) => rect.attr("display", "none"));
+          return;
+        }
 
-      offset = (offset + 1) % totalLength;
+        offset = (offset + 1) % totalLength;
 
-      flowRects.forEach((rect, i) => {
-        const distance = (offset + i * particleSpacing) % totalLength;
-        const point = polyline.node()!.getPointAtLength(distance);
-        const nextPoint = polyline
-          .node()!
-          .getPointAtLength((distance + 2) % totalLength);
-        const angle =
-          Math.atan2(nextPoint.y - point.y, nextPoint.x - point.x) *
-          (180 / Math.PI);
+        flowRects.forEach((rect, i) => {
+          const distance = (offset + i * minSpacing) % totalLength;
+          const point = polyline.node()!.getPointAtLength(distance);
+          const nextPoint = polyline
+            .node()!
+            .getPointAtLength((distance + 2) % totalLength);
+          const angle =
+            Math.atan2(nextPoint.y - point.y, nextPoint.x - point.x) *
+            (180 / Math.PI);
 
-        rect
-          .attr("x", point.x - adjustedParticleWidth / 2)
-          .attr("y", point.y - adjustedParticleHeight / 2)
-          .attr("transform", `rotate(${angle}, ${point.x}, ${point.y})`);
-      });
+          rect
+            .attr("x", point.x - adjustedParticleWidth / 2)
+            .attr("y", point.y - adjustedParticleHeight / 2)
+            .attr("transform", `rotate(${angle}, ${point.x}, ${point.y})`);
+        });
 
-      pipeAnimationFrames[id] = requestAnimationFrame(animateFlow);
-    };
+        pipeAnimationFrames[id] = requestAnimationFrame(animateFlow);
+      };
 
-    animateFlow();
+      animateFlow();
+    }
 
     // Compute text position at the midpoint of the pipe
     const midIndex = Math.floor(points.length / 2);
     const midPoint = points[midIndex];
     const { x: pixelX, y: pixelY } = toPixel(midPoint);
 
-    if (isModify) {
+    if (isModify && isSelected(selectedComponents, id, "pipe")) {
       pipeGroup
         .append("text")
         .attr("x", pixelX)
@@ -210,13 +235,6 @@ export function drawPipe(
     }
 
     const size = Math.min(svgWidth, svgHeight) * 0.01;
-
-    /* Mark or point of the pipe angle. Handles multiple points */
-    pipe.points.forEach((p, idx) => {
-      // Add an internal unique id for each point
-      //create temp id for each point
-      p.id = `${pipe.id}-pt${idx}`;
-    });
 
     // Drag handles per point
     pipeGroup
@@ -278,8 +296,12 @@ export function drawPipe(
 /*  Handle water meter */
 export function drawWaterMeter(
   svg: d3.Selection<SVGSVGElement, unknown, null, undefined>,
-  meters: WaterMeter[],
-  setMeters: (id: string, meter: WaterMeter) => void,
+  elements: ShapesType,
+  setElements: React.Dispatch<React.SetStateAction<ShapesType>>,
+
+  modifiedElements: ShapesType[],
+  setModifiedElements: React.Dispatch<React.SetStateAction<ShapesType[]>>,
+
   svgWidth: number,
   svgHeight: number,
 
@@ -296,7 +318,7 @@ export function drawWaterMeter(
   const g = svg.select(".zoom-layer");
   if (g.empty()) return;
 
-  meters.forEach((meter) => {
+  elements["water-meters"].forEach((meter) => {
     const meterGroup = g
       .append("g")
       .attr("class", `water-meter meter-${meter.id}`);
@@ -332,16 +354,16 @@ export function drawWaterMeter(
         .attr("stroke", "#007bff")
         .attr("stroke-width", 1) */
         .style("opacity", () =>
-          isSelected(selectedComponents, meter.id, "water-meter") ? 0.6 : 1
+          isSelected(selectedComponents, meter.id, "water-meters") ? 0.6 : 1
         )
         .style("cursor", isModify ? "move" : "pointer")
         .on("mousedown", (event) => event.stopPropagation())
         .on("click", (event) => {
           event.stopPropagation();
-          toggleSelection(meter, "water-meter", setSelectedComponents);
+          toggleSelection(meter, "water-meters", setSelectedComponents);
         });
 
-    // Responsive meter label
+    // Responsive meter label3
     meterGroup
       .append("text")
       .attr("x", posX)
@@ -353,14 +375,23 @@ export function drawWaterMeter(
       .text(meter.id);
 
     if (isModify) {
-      const drag = createDragHandlers<SVGImageElement, WaterMeter>(
+      const drag = createDragHandlers<SVGImageElement, ShapeItem>(
         svg,
-        (meter) => meter.points[0], // get position
-        (meter, x, y) => ({
-          ...meter,
-          points: [{ x, y }, ...meter.points.slice(1)],
+        (d) => d.points[0], // get position
+        (d, x, y) => ({
+          ...d,
+          points: [{ ...d.points[0], x, y }, ...d.points.slice(1)], // ✅ updates the first point
         }),
-        setMeters,
+        (
+          id,
+          updated // ✅ correct setter usage
+        ) =>
+          setElements((prev) => ({
+            ...prev,
+            ["water-meters"]: prev["water-meters"].map((wm) =>
+              wm.id === id ? updated : wm
+            ),
+          })),
         svgWidth,
         svgHeight
       );
@@ -373,8 +404,11 @@ export function drawWaterMeter(
 /* Handle Water Supply */
 export function drawWaterSupply(
   svg: d3.Selection<SVGSVGElement, unknown, null, undefined>,
-  supplies: WaterSupply[],
-  setSupplies: (id: string, meter: WaterSupply) => void,
+  elements: ShapesType,
+  setElements: React.Dispatch<React.SetStateAction<ShapesType>>,
+
+  modifiedElements: ShapesType[],
+  setModifiedElements: React.Dispatch<React.SetStateAction<ShapesType[]>>,
   svgWidth: number,
   svgHeight: number,
 
@@ -390,7 +424,7 @@ export function drawWaterSupply(
   // Remove existing meters
   svg.selectAll(".water-supply").remove();
 
-  supplies.forEach((supply) => {
+  elements["water-supply"].forEach((supply) => {
     const g = svg.select(".zoom-layer");
     const supplyGroup = g
       .append("g")
@@ -447,19 +481,24 @@ export function drawWaterSupply(
       .text(supply.id);
 
     if (isModify) {
-      const drag = createDragHandlers<SVGImageElement, WaterSupply>(
+      const drag = createDragHandlers<SVGImageElement, ShapeItem>(
         svg,
-        (tank) => tank.points[0],
+        (d) => d.points[0], // get position
         /* Function use to set updated points */
-        (tank, x, y) => {
-          //console.log(`Tank:`, tank);
-
-          return {
-            ...tank,
-            points: [{ x, y }, ...tank.points.slice(1)],
-          };
-        },
-        setSupplies,
+        (d, x, y) => ({
+          ...d,
+          points: [{ ...d.points[0], x, y }, ...d.points.slice(1)], // ✅ updates the first point
+        }),
+        (
+          id,
+          updated // ✅ correct setter usage
+        ) =>
+          setElements((prev) => ({
+            ...prev,
+            ["water-supply"]: prev["water-supply"].map((ws) =>
+              ws.id === id ? updated : ws
+            ),
+          })),
         svgWidth,
         svgHeight
       );
