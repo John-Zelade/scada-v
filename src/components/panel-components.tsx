@@ -52,6 +52,7 @@ export function PanelComponents({
 }: Props) {
   const [expanded, setExpanded] = useState({
     shapes: true,
+    [`scada-water`]:true,
     mechanical: true,
     electrical: true,
   });

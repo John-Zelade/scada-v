@@ -39,29 +39,6 @@ export function PanelComponentDetails({
 }: Props) {
   return (
     <div className="relative flex w-full flex-col">
-      {/* Toggle Button */}
-      <div
-        onClick={() => setshowElementInfos?.(!showElementInfos)}
-        className="absolute -left-[25px] top-8 z-50 flex rounded-l-sm bg-primary p-[5px] cursor-pointer hover:bg-primary/80 transition"
-      >
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button className="grid place-items-center text-white h-5 w-4">
-                {showElementInfos ? (
-                  <PanelRightClose className="h-4 w-4" />
-                ) : (
-                  <PanelLeftClose className="h-4 w-4" />
-                )}
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="left">
-              <p>{showElementInfos ? "Hide Info" : "Show Info"}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
-
       {/* Information Panel */}
       <Card className="rounded-none border-0 shadow-none p-0 bg-card/70 backdrop-blur-sm">
         <ScrollArea className="h-screen px-3 py-3">

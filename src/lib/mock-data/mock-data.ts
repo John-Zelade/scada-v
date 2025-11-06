@@ -276,8 +276,24 @@ export const water_supply = {
 export const Elements = {
   // Basic geometric shapes
   circle: [
-    { id: "circle01", points: [{ x: 10, y: 10 }] },
-    { id: "circle02", points: [{ x: 10, y: 20 }] },
+    {
+      id: "circle01",
+      points: [
+        {
+          x: 5,
+          y: 5,
+        },
+      ],
+    },
+    {
+      id: "circle02",
+      points: [
+        {
+          x: 8,
+          y: 5,
+        },
+      ],
+    },
   ],
 
   rect: [

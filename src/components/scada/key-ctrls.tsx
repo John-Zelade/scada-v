@@ -31,6 +31,21 @@ export class KeyCntrls {
   }
 
   private handleKeyDown = (e: KeyboardEvent) => {
+    // Select All (Ctrl + A or Cmd + A)
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "a") {
+      e.preventDefault(); // prevent browser "select all" text
+      this.selectAll();
+      return;
+    }
+
+    // Straighten pipe (Ctrl + L)
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "l") {
+      e.preventDefault();
+      this.straightenSelectedPipes();
+      return;
+    }
+
+    /*Move selected element using Arrow key  */
     if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
       this.pressedKeys.add(e.key);
     }
@@ -76,7 +91,7 @@ export class KeyCntrls {
             }
           });
 
-          (updated as any)[type] = (prev as any)[type]?.map((item: any) =>
+          (updated as any)[type] = (updated as any)[type]?.map((item: any) =>
             item.id === data.id ? { ...item, points: movedPoints } : item
           );
 
@@ -134,6 +149,61 @@ export class KeyCntrls {
       });
 
       this.updateSelected?.(newSelectedComponents);
+      return updated;
+    });
+  }
+
+  private selectAll() {
+    if (!this.updateSelected) return;
+
+    this.setElements((prev) => {
+      const all: SelectedComponent[] = [];
+
+      (Object.entries(prev) as [keyof ShapesType, any[]][]).forEach(
+        ([type, items]) => {
+          if (!Array.isArray(items)) return;
+          (items as any[]).forEach((item) => {
+            all.push({ type: type as SelectedComponent["type"], data: item });
+          });
+        }
+      );
+
+      this.updateSelected?.(all);
+      return prev;
+    });
+  }
+
+  private straightenSelectedPipes() {
+    const selected = this.getSelected();
+    if (selected.length === 0) return;
+
+    this.setElements((prev) => {
+      const updated = { ...prev };
+
+      selected.forEach(({ data, type }) => {
+        if (type !== "pipe" || !("points" in data)) return;
+
+        const points = data.points;
+        if (points.length < 2) return;
+
+        // Get the first and last point
+        const [start, end] = [points[0], points[points.length - 1]];
+
+        // Compute equally spaced straight line between them
+        const newPoints = points.map((_, i) => {
+          const t = i / (points.length - 1);
+          return {
+            ..._,
+            x: start.x + (end.x - start.x) * t,
+            y: start.y + (end.y - start.y) * t,
+          };
+        });
+
+        (updated as any).pipe = (prev as any).pipe.map((p: any) =>
+          p.id === data.id ? { ...p, points: newPoints } : p
+        );
+      });
+
       return updated;
     });
   }

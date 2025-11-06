@@ -7,3 +7,7 @@ export function isSelected(
 ): boolean {
   return selected.some((item) => item.data.id === id && item.type === type);
 }
+
+export function addNewElement() {}
+
+export function duplicateElement() {}

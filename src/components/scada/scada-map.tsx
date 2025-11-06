@@ -4,8 +4,10 @@ import * as d3 from "d3";
 import { KeyCntrls } from "./key-ctrls";
 import {
   drawPipe,
+  drawPressureGauge,
   drawWaterMeter,
   drawWaterSupply,
+  drawWaterTank,
 } from "./components/scada-components";
 import {
   water_meters,
@@ -60,44 +62,17 @@ export function SCADAMap({
 
   const svgRef = useRef<SVGSVGElement>(null);
   const [dimensions, setDimensions] = useState({ width, height });
-  // 🟩 Tool panel position (movable)
-  const [panelPos, setPanelPos] = useState({
-    x: 89.7, // 90%
-    y: 1, // 90%
-  });
 
   const [isDragging, setIsDragging] = useState(false);
   const dragOffset = useRef({ x: 0, y: 0 });
+  const [zoomScale, setZoomScale] = useState(1);
 
   const [selectedTool, setSelectedTool] = useState<ToolType>(null);
   const [selectedComponents, setSelectedComponents] = useState<
     SelectedComponent[]
   >([]);
   //console.log(`selectedComponents`, selectedComponents);
-  // console.log(`elements:`, elements);
-
-  const [selectedPipe, setSelectedPipe] = useState<string | null>(null);
-
-  // Pipes stored data
-  //const [pipes, setPipes] = useState(water_pipes.pipes);
-  const [supplies, setSupplies] = useState<WaterSupply[]>(water_supply.supply); // water supply
-  //const [meters, setMeters] = useState<WaterMeter[]>(water_meters.meters); // water meter
-
-  useEffect(() => {
-    const moveListener = (e: MouseEvent) =>
-      handleMouseMove({ e, isDragging, setPanelPos, dragOffset, dimensions });
-    const upListener = () => handleMouseUp(setIsDragging);
-
-    if (isDragging) {
-      window.addEventListener("mousemove", moveListener);
-      window.addEventListener("mouseup", upListener);
-    }
-
-    return () => {
-      window.removeEventListener("mousemove", moveListener);
-      window.removeEventListener("mouseup", upListener);
-    };
-  }, [isDragging]);
+  //console.log(`elements:`, elements);
 
   useEffect(() => {
     if (!svgRef.current) return;
@@ -114,10 +89,6 @@ export function SCADAMap({
       // Always clear existing grid first
       svg.selectAll(".grid-lines").remove();
 
-      // Only draw grid when modify mode is active
-      /* if (isModify) {
-        drawGrid(svg, { width, height });
-      } */
       drawGrid(svg, { width, height }, isModify);
     };
 
@@ -138,7 +109,9 @@ export function SCADAMap({
       .zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.1, 100]) // allow zoom out more
       .on("zoom", (event) => {
-        g.attr("transform", event.transform);
+        const { k: scale, x, y } = event.transform;
+        g.attr("transform", `translate(${x}, ${y}) scale(${scale})`);
+        setZoomScale(scale);
       });
 
     const zoom = d3
@@ -150,8 +123,10 @@ export function SCADAMap({
         // When scale = 1, ignore translate so user can't pan
         if (scale <= 1) {
           g.attr("transform", `scale(1)`);
+          setZoomScale(1);
         } else {
           g.attr("transform", `translate(${x}, ${y}) scale(${scale})`);
+          setZoomScale(scale);
         }
       });
 
@@ -161,7 +136,25 @@ export function SCADAMap({
     svg.call(isModify ? enabledZoomOut : zoom);
   }, [isModify]);
 
-  // Draw Shape Components
+  /* Move element using arrow key */
+  useEffect(() => {
+    const moveStep = 1 / zoomScale;
+    //console.log(`moveStep`, moveStep);
+
+    const keyControls = new KeyCntrls(
+      () => selectedComponents,
+      setElements,
+      moveStep, //movement speed and distance base on how zoom
+      setSelectedComponents,
+      () => isModify
+    );
+
+    return () => keyControls.destroy();
+  }, [selectedComponents, isModify]);
+
+  /* ====================================================================================
+                                    Draw Circle Elements
+  =====================================================================================*/
   useEffect(() => {
     if (!svgRef.current) return;
     const svg = d3.select(svgRef.current);
@@ -183,10 +176,11 @@ export function SCADAMap({
     );
   }, [elements, dimensions, isModify, selectedComponents]);
 
-  // Draw pipes
+  /* ====================================================================================
+                                    Draw Pipe Elements
+  =====================================================================================*/
   useEffect(() => {
     if (!svgRef.current) return;
-
     const svg = d3.select(svgRef.current);
 
     // Safely extract pipe elements from the 'elements' state
@@ -209,7 +203,9 @@ export function SCADAMap({
     );
   }, [elements, dimensions, isModify, selectedComponents]);
 
-  // Draw meters
+  /* ====================================================================================
+                                    Draw Meter Elements
+  =====================================================================================*/
   useEffect(() => {
     if (!svgRef.current) return;
     const svg = d3.select(svgRef.current);
@@ -230,12 +226,60 @@ export function SCADAMap({
     );
   }, [elements, dimensions, isModify, selectedComponents]);
 
-  /* Draw Water Supply */
+  /* ====================================================================================
+                                    Draw Water Supply Elements
+  =====================================================================================*/
   useEffect(() => {
     if (!svgRef.current) return;
     const svg = d3.select(svgRef.current);
 
     drawWaterSupply(
+      svg,
+      elements,
+      setElements,
+
+      modifiedShapes,
+      setModifiedShapes,
+
+      dimensions.width,
+      dimensions.height,
+      isModify,
+      selectedComponents,
+      setSelectedComponents
+    );
+  }, [elements, dimensions, isModify, selectedComponents]);
+
+  /* ====================================================================================
+                                    Draw Water Tanks Element
+  =====================================================================================*/
+  useEffect(() => {
+    if (!svgRef.current) return;
+    const svg = d3.select(svgRef.current);
+
+    drawWaterTank(
+      svg,
+      elements,
+      setElements,
+
+      modifiedShapes,
+      setModifiedShapes,
+
+      dimensions.width,
+      dimensions.height,
+      isModify,
+      selectedComponents,
+      setSelectedComponents
+    );
+  }, [elements, dimensions, isModify, selectedComponents]);
+
+  /* ====================================================================================
+                           Draw Water Pressure Transmitter Element
+  =====================================================================================*/
+  useEffect(() => {
+    if (!svgRef.current) return;
+    const svg = d3.select(svgRef.current);
+
+    drawPressureGauge(
       svg,
       elements,
       setElements,
@@ -274,24 +318,10 @@ export function SCADAMap({
     });
   };
 
-  /* Move element using arrow key */
-
-  useEffect(() => {
-    const keyControls = new KeyCntrls(
-      () => selectedComponents,
-      setElements,
-      0.1,
-      setSelectedComponents,
-      () => isModify
-    );
-
-    return () => keyControls.destroy();
-  }, [selectedComponents, isModify]);
-
   // Add this inside your SCADAMap component
 
   // Duplicate selected pipe function
-  const duplicatePipe = () => {
+  /* const duplicatePipe = () => {
     if (!selectedPipe) return;
 
     setElements((prev) => {
@@ -316,10 +346,10 @@ export function SCADAMap({
     });
 
     setSelectedPipe(() => `pipe${Elements.pipe.length + 1}`);
-  };
+  }; */
 
   // Add keyboard listener for Ctrl+D
-  useEffect(() => {
+  /* useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.key.toLowerCase() === "d") {
         e.preventDefault(); // prevent browser bookmark
@@ -329,10 +359,10 @@ export function SCADAMap({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedPipe, elements]);
+  }, [selectedPipe, elements]); */
 
   // Handle click on canvas for placing new pipe points
-  const handleSvgClick = (event: React.MouseEvent<SVGSVGElement>) => {
+  /*  const handleSvgClick = (event: React.MouseEvent<SVGSVGElement>) => {
     if (selectedTool !== "pipe" || !selectedPipe) return;
 
     const rect = svgRef.current?.getBoundingClientRect();
@@ -359,7 +389,7 @@ export function SCADAMap({
         pipe: updatedPipes,
       };
     });
-  };
+  }; */
 
   return (
     <div
@@ -372,47 +402,13 @@ export function SCADAMap({
         //backgroundPosition: "center",
       }}
     >
-      {/* === Tool Panel === */}
-      <div
-        className={`${"hidden"} backdrop-blur-md bg-white/20 border border shadow-lg rounded-md p-4 flex flex-col`}
-        onMouseDown={(e) =>
-          handleMouseDown(e, panelPos, setIsDragging, dragOffset, dimensions)
-        }
-        style={{
-          position: "absolute",
-          left: `${(panelPos.x / 100) * dimensions.width}px`,
-          top: `${(panelPos.y / 100) * dimensions.height}px`,
-          cursor: isDragging ? "grabbing" : "grab",
-
-          userSelect: "none",
-        }}
-      >
-        <h2 className="mb-2 font-semibold">Tools</h2>
-        <button
-          className={`cursor-pointer mb-2 rounded-md border p-2 text-left ${
-            selectedTool === "pipe" ? "bg-blue-200" : "hover:bg-gray-100"
-          }`}
-          //onClick={addPipe}
-          onClick={() => setSelectedTool("pipe")}
-        >
-          ➕Pipe Elbow
-        </button>
-        <button
-          className={`cursor-pointer mb-2 rounded-md border p-2 text-left hover:bg-gray-100"
-          }`}
-          onClick={addPipe}
-        >
-          ➕ Pipe
-        </button>
-      </div>
       {/* === SCADA Canvas === */}
       <svg
         width={`100%`}
         height={`100%`}
         ref={svgRef}
         onClick={(event) => {
-          handleSvgClick(event);
-          setSelectedPipe(null);
+          //handleSvgClick(event);
         }}
         style={{
           display: "block",

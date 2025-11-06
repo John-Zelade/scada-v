@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Slash,
 } from "lucide-react";
+import { PressureTransmitterGauge, WaterTankIcon } from "@/components/icons";
 
 export const categories = [
   {
@@ -26,6 +27,14 @@ export const categories = [
         icon: <Square className="h-4 w-4 " />,
       },
       { name: "Line", icon: <Slash className="h-4 w-4 " /> },
+    ],
+  },
+  {
+    name: "SCADA Water",
+    key: "scada-water",
+    items: [
+      { name: "Tank", icon: <WaterTankIcon value={50} className="h-4 w-7" /> },
+      { name: "Pressure", icon: <PressureTransmitterGauge value={120} /> },
     ],
   },
   {

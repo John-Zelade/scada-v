@@ -63,8 +63,8 @@ export function home() {
 
   const handleSave = () => {
     try {
-      console.log("✅ JSON updated Elements: ", elements);
-      //console.log(JSON.stringify(elements, null, 2));
+      //console.log("✅ JSON updated Elements: ", elements);
+      console.log(JSON.stringify(elements, null, 2));
     } catch (error) {
       //console.error("❌ Failed to update JSON:", error);
     }

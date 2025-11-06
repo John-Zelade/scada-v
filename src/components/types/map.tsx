@@ -52,6 +52,9 @@ export type Point = {
 export interface ShapeItem {
   id: string;
   points: Point[];
+  value?: string;
+  name?: string;
+  size?: number;
 }
 
 export interface ShapesType {
@@ -59,7 +62,9 @@ export interface ShapesType {
   rect: ShapeItem[];
   line: ShapeItem[];
   ["water-meters"]: ShapeItem[];
+  ["water-tanks"]: ShapeItem[];
   ["water-supply"]: ShapeItem[];
+  ["water-pressure"]: ShapeItem[];
   pipe: Pipes[];
   valve: ShapeItem[];
   pump: ShapeItem[];
@@ -72,6 +77,8 @@ export type SelectedComponent = {
   data: WaterSupply | WaterMeter | Pipes | PipePoint | ShapeItem;
   type:
     | "water-supply"
+    | "water-tanks"
+    | "water-pressure"
     | "water-meters"
     | "pipe"
     | "circle"
