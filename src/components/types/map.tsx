@@ -31,6 +31,7 @@ export interface Pipes {
 export interface WaterMeter {
   id: string;
   points: { x: number; y: number }[];
+  value?: string;
 }
 
 export interface WaterSupply {

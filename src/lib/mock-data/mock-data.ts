@@ -1,5 +1,36 @@
 import type { Rectangle } from "recharts";
 
+export function generateRandomWaterData(
+  intervalMs: number = 5000,
+  data_type: string
+) {
+  // Define ranges for each data type
+  const ranges: Record<
+    string,
+    { min: number; max: number; variation: number }
+  > = {
+    "water-meter": { min: 0, max: 500, variation: 30 },
+    "water-pressure": { min: 0, max: 300, variation: 15 },
+    "water-tank": { min: 0, max: 100, variation: 3 },
+  };
+
+  const config = ranges[data_type] || { min: 0, max: 100, variation: 10 };
+
+  let value = Math.random() * (config.max - config.min) + config.min;
+
+  const timer = setInterval(() => {
+    const delta = (Math.random() - 0.5) * config.variation; // +/- variation
+    value += delta;
+    // Keep value within valid range
+    value = Math.max(config.min, Math.min(config.max, value));
+  }, intervalMs);
+
+  return {
+    getValue: () => value,
+    stop: () => clearInterval(timer),
+  };
+}
+
 export const water_meters = {
   type: "water-meter",
   meters: [

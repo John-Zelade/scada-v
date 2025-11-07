@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
-
+import { generateRandomWaterData } from "@/lib/mock-data/mock-data";
 import { KeyCntrls } from "./key-ctrls";
 import {
   drawPipe,
@@ -57,8 +57,58 @@ export function SCADAMap({
   width = 600,
   height = 400,
 }: SCADAMapProps) {
-  //console.log(`modifiedShapes: `, modifiedShapes);
-  //console.log(`elements: `, elements);
+  const waterRef = useRef<any>(null);
+
+  useEffect(() => {
+    const countTime = 5_000; //adjust interval (5 seconds)
+    const water = generateRandomWaterData(countTime, "water-meter");
+    const tank = generateRandomWaterData(countTime, "water-tank");
+    const pressure = generateRandomWaterData(countTime, "water-pressure");
+
+    waterRef.current = water;
+
+    const interval = setInterval(() => {
+      setElements((prev) => ({
+        ...prev,
+        ["water-meters"]: prev["water-meters"].map((meter) => {
+          // Each meter gets a unique random value based on the generator
+          const uniqueValue = water.getValue() + Math.random() * 10 - 5;
+          return {
+            ...meter,
+            value: String(uniqueValue.toFixed(2)),
+          };
+        }),
+
+        ["water-pressure"]: prev["water-pressure"].map((_pressure) => {
+          const base = pressure.getValue(); // already 0–300
+          const value = base + (Math.random() * 10 - 5); // ±5 PSI variation
+          const clamped = Math.max(0, Math.min(300, value));
+
+          return {
+            ..._pressure,
+            value: String(clamped.toFixed(2)),
+          };
+        }),
+
+        ["water-tanks"]: prev["water-tanks"].map((_tank) => {
+          const base = tank.getValue(); // ~0–100
+          const value = base + Math.random() * 5 - 2.5; // ±2.5% variation
+          const clamped = Math.max(0, Math.min(100, value));
+          return {
+            ..._tank,
+            value: String(clamped.toFixed(2)),
+          };
+        }),
+      }));
+    }, countTime);
+
+    return () => {
+      clearInterval(interval);
+      water.stop();
+      pressure.stop();
+      tank.stop();
+    };
+  }, []);
 
   const svgRef = useRef<SVGSVGElement>(null);
   const [dimensions, setDimensions] = useState({ width, height });
@@ -396,10 +446,6 @@ export function SCADAMap({
       className="h-full w-full"
       style={{
         position: "relative",
-        //backgroundImage: `url(${WaterBranch})`,
-        //backgroundSize: "contain",
-        //backgroundRepeat: "no-repeat",
-        //backgroundPosition: "center",
       }}
     >
       {/* === SCADA Canvas === */}
@@ -411,6 +457,7 @@ export function SCADAMap({
           //handleSvgClick(event);
         }}
         style={{
+          background: "#cac4c4ff", //"#1a1a1a",
           display: "block",
         }}
       >

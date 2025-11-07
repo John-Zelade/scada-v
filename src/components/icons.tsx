@@ -72,7 +72,6 @@ export const WaterTankIcon: React.FC<IconProps> = ({
           style={{
             background: "linear-gradient(to bottom, #d9d9d9, #a6a6a6)",
             border: "1px solid #8c8c8c",
-
             position: "relative",
             top: "-2px",
             zIndex: 3,
@@ -80,19 +79,72 @@ export const WaterTankIcon: React.FC<IconProps> = ({
         ></div>
       </div>
 
+      {/* === Tank Body === */}
       <div
-        className={`relative overflow-hidden border ${levelBorder} bg-gradient-to-b from-blue-100 to-blue-50`}
+        className="relative flex justify-center overflow-hidden border"
         style={{
-          borderRadius: "10% / 60%", // rounder top/bottom
-          borderWidth: "2px",
+          borderRadius: "10% / 60%",
+          borderWidth: "1px",
           borderStyle: "solid",
-          borderColor: "#ccc",
+          borderColor: "#6b6b6b",
           height: `${height}px`,
           width: `100%`,
-          boxShadow:
-            "inset 0 8px 8px rgba(0,0,0,0.08), inset 0 -10px 12px rgba(0,0,0,0.12), 0 4px 6px rgba(0,0,0,0.1)",
+          background: `
+      radial-gradient(circle at 35% 25%, #f9f9f9, transparent 45%),
+      linear-gradient(145deg, #d0d0d0 0%, #e5e5e5 20%, #fdfdfd 40%, #cecece 60%, #a8a8a8 100%)
+    `,
+          boxShadow: `
+      inset 0 6px 10px rgba(255,255,255,0.35),
+      inset 0 -6px 10px rgba(0,0,0,0.25),
+      0 2px 6px rgba(0,0,0,0.25)
+    `,
+          position: "relative",
+          overflow: "hidden",
         }}
       >
+        {/* top horizontal reflection */}
+        <div
+          className="absolute top-0 left-0 h-[25%] w-full opacity-60"
+          style={{
+            background:
+              "linear-gradient(to bottom, rgba(255,255,255,0.9), rgba(255,255,255,0.2), transparent)",
+          }}
+        ></div>
+
+        {/* main vertical reflection (bright streak) */}
+        <div
+          className="absolute top-0 left-[20%] h-full w-[6%] opacity-35"
+          style={{
+            background:
+              "linear-gradient(to right, rgba(255,255,255,0.8), rgba(255,255,255,0.05))",
+            filter: "blur(1px)",
+          }}
+        ></div>
+
+        {/* soft side reflection (right edge) */}
+        <div
+          className="absolute top-0 right-[10%] h-full w-[4%] opacity-25"
+          style={{
+            background:
+              "linear-gradient(to left, rgba(255,255,255,0.5), transparent)",
+            filter: "blur(1.5px)",
+          }}
+        ></div>
+
+        {/* fine brushed steel lines for realism */}
+        {[...Array(8)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute top-0 h-full opacity-[0.07]"
+            style={{
+              left: `${i * 12}%`,
+              width: "2%",
+              background:
+                "linear-gradient(to right, rgba(255,255,255,0.6), rgba(255,255,255,0))",
+            }}
+          ></div>
+        ))}
+
         {/* Water wave - back */}
         <svg
           className="absolute bottom-0 left-0 z-0 opacity-40"
@@ -144,6 +196,17 @@ export const WaterTankIcon: React.FC<IconProps> = ({
             </use>
           </g>
         </svg>
+        {/* === Percentage Text (Centered Above Water) === */}
+        <div
+          className="absolute z-10 text-[14px] font-semibold text-[#222]"
+          style={{
+            fontFamily: "Consolas, monospace",
+            bottom: value > 90 ? "50%" : `${value + 5}%`,
+            transform: "translateY(50%)",
+          }}
+        >
+          {`${value.toFixed(2)}%`}
+        </div>
       </div>
     </div>
   );
@@ -153,7 +216,6 @@ export const PressureTransmitterGauge: React.FC<GaugeProps> = ({
   value,
   size = 20,
 }) => {
-
   const maxPSI = 300; // new max
   const tickCount = 24; // same as ticks
   const labelPSIs = [0, 25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275];

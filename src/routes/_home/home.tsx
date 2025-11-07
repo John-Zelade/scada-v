@@ -80,7 +80,10 @@ export function home() {
 
   return (
     <>
-      <main className="h-screen">
+      <main
+        className="h-screen "
+  
+      >
         {isModify && (
           <>
             <div

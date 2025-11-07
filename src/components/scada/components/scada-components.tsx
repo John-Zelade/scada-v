@@ -35,6 +35,7 @@ export function drawPipe(
   >,
   meters?: WaterMeter[]
 ) {
+  const colorText = "#ffff";
   svg.selectAll(".water-pipe").remove();
   //console.log(`Pipes List:`, pipes);
 
@@ -79,7 +80,7 @@ export function drawPipe(
       .join(" ");
 
     // --- Outer border layer (gray pipe border) ---
-    const outerBorderbasePipeThickness = Math.min(svgWidth, svgHeight) * 0.008; // base thickness (0.5%)
+    const outerBorderbasePipeThickness = Math.min(svgWidth, svgHeight) * 0.009; // base thickness (0.5%)
     const outerBorderadjustedPipeThickness = outerBorderbasePipeThickness;
 
     pipeGroup
@@ -91,7 +92,7 @@ export function drawPipe(
       .attr("stroke-linejoin", !isModify ? "round" : "miter"); //Rounded corners when not modifying
 
     // Compute pipe thickness relative to SVG size and zoom
-    const basePipeThickness = Math.min(svgWidth, svgHeight) * 0.005; // base thickness (0.5%)
+    const basePipeThickness = Math.min(svgWidth, svgHeight) * 0.006; // base thickness (0.5%)
     const adjustedPipeThickness = basePipeThickness;
 
     const polyline = pipeGroup
@@ -237,7 +238,7 @@ export function drawPipe(
         .attr("y", pixelY - 10) // slightly above the pipe
         .attr("text-anchor", "middle")
         .attr("font-size", 10)
-        .attr("fill", "#000")
+        .attr("fill", `${colorText}`)
         .raise()
         .text(id);
     }
@@ -321,6 +322,7 @@ export function drawWaterMeter(
     React.SetStateAction<SelectedComponent[]>
   >
 ) {
+  const colorText = "#ffff";
   // Remove existing meters
   svg.selectAll(".water-meter").remove();
   // Ensure we have a map layer
@@ -348,7 +350,6 @@ export function drawWaterMeter(
         .attr("y", posY - radius)
         .attr("width", radius * 2)
         .attr("height", radius * 2)
-        .attr("clip-path", "circle(50%)") // keeps it circular
         .style("opacity", () =>
           isSelected(selectedComponents, meter.id, "water-meters") ? 0.6 : 1
         )
@@ -364,12 +365,24 @@ export function drawWaterMeter(
     meterGroup
       .append("text")
       .attr("x", posX)
-      .attr("y", posY - radius + 1) // slightly above the meter
+      .attr("y", posY - radius) // slightly above the meter
       .attr("text-anchor", "middle")
-      .attr("fill", "#000")
+      .attr("fill", `${colorText}`)
       .style("font-size", `${8}px`)
       .style("font-weight", 600)
       .text(meter.id);
+
+    if (!isModify) {
+      meterGroup
+        .append("text")
+        .attr("x", posX)
+        .attr("y", posY + 2)
+        .attr("text-anchor", "middle")
+        .attr("fill", `${colorText}`)
+        .style("font-size", `${4}px`)
+        .style("font-weight", 600)
+        .text(`${String(meter.value ?? 0)}m³`);
+    }
 
     if (isModify) {
       const drag = createDragHandlers<SVGImageElement, ShapeItem>(
@@ -502,6 +515,7 @@ export function drawWaterTank(
     React.SetStateAction<SelectedComponent[]>
   >
 ) {
+  const colorText = "#252424ff";
   // Remove existing tanks
   svg.selectAll(".water-tanks").remove();
 
@@ -518,7 +532,10 @@ export function drawWaterTank(
     const radius = Math.min(svgWidth, svgHeight) * 0.025;
 
     const svgMarkup = ReactDOMServer.renderToStaticMarkup(
-      <WaterTankIcon value={Number(tank.value) || 0} height={radius * 8} />
+      <WaterTankIcon
+        value={isModify ? 0 : Number(tank.value) || 0}
+        height={radius * 8}
+      />
     );
 
     const __tank =
@@ -543,48 +560,37 @@ export function drawWaterTank(
           toggleSelection(tank, "water-tanks", setSelectedComponents);
         });
 
-    const foreignObj = __tank.node() as SVGForeignObjectElement;
-    const tankDiv = foreignObj.querySelector(".water-tank") as HTMLDivElement;
-    const { width, height } = tankDiv.getBoundingClientRect();
-
     // Meter label
     if (!isModify) {
-      // Top-right label (tank name)
       tankGroup
         .append("text")
-        .attr("x", posX + width / 2) // right edge minus padding
-        .attr("y", posY - height / 5) // top edge plus padding
-        .attr("text-anchor", "end") // align to right
-        .attr("font-size", 10)
-        .attr("font-weight", 500)
-        .attr("fill", "#000")
+        .attr("x", posX + radius)
+        .attr("y", posY - radius - 1) // slightly above the meter
+        .attr("text-anchor", "middle")
+        .attr("fill", `#ffff`)
+        .style("font-size", `${10}px`)
+        .style("font-weight", 600)
         .text(`${tank.name}`);
 
-      // Bottom-center labels (value + Water Level)
-      const bottomY = posY + height / 2 + 15; // bottom of tank plus offset
-
-      const bottomText = tankGroup
+  /*     tankGroup
         .append("text")
-        .attr("x", posX + width / 2) // center horizontally
-        .attr("y", bottomY)
-        .attr("text-anchor", "middle") // center text
-        .attr("fill", "#000");
+        .attr("x", (posX + radius) * 1.45)
+        .attr("y", posY - radius + 66) // slightly above the meter
+        .attr("text-anchor", "middle")
+        .attr("fill", `${colorText}`)
+        .style("font-size", `${10}px`)
+        .style("font-weight", 600)
+        .text(`${tank.value ?? 0}%`);
 
-      bottomText
-        .append("tspan")
-        .attr("x", posX + width / 2.15)
-        .attr("dy", 0)
-        .attr("font-size", 12)
-        .attr("font-weight", 600)
-        .text(`${tank.value}%`);
-
-      bottomText
-        .append("tspan")
-        .attr("x", posX + width / 2.15)
-        .attr("dy", 15)
-        .attr("font-size", 12)
-        .attr("font-weight", 600)
-        .text("Water Level");
+      tankGroup
+        .append("text")
+        .attr("x", (posX + radius) * 1.45)
+        .attr("y", posY - radius + 75) // slightly above the meter
+        .attr("text-anchor", "middle")
+        .attr("fill", `${colorText}`)
+        .style("font-size", `${10}px`)
+        .style("font-weight", 600)
+        .text("Water Level"); */
     }
     if (isSelected(selectedComponents, tank.id, "water-tanks")) {
       tankGroup
@@ -594,7 +600,7 @@ export function drawWaterTank(
         .attr("text-anchor", "middle")
         .attr("font-size", 10)
         .attr("font-weight", 500)
-        .attr("fill", "#000")
+        .attr("fill", `${colorText}`)
         .text(`${tank.name}`);
     }
 
@@ -646,6 +652,7 @@ export function drawPressureGauge(
     React.SetStateAction<SelectedComponent[]>
   >
 ) {
+  const colorText = "#ffff";
   // Remove existing tanks
   svg.selectAll(".water-pressure").remove();
 
@@ -663,7 +670,7 @@ export function drawPressureGauge(
 
     const svgMarkup = ReactDOMServer.renderToStaticMarkup(
       <PressureTransmitterGauge
-        value={Number(pt.value) || 0}
+        value={isModify ? 0 : Number(pt.value) || 0}
         size={radius * 8}
       />
     );
@@ -711,23 +718,23 @@ export function drawPressureGauge(
       // Top-right label (pt name)
       ptGroup
         .append("text")
-        .attr("x", posX + width / 2) // right edge minus padding
-        .attr("y", posY - height / 7) // top edge plus padding
+        .attr("x", posX + radius + 15)
+        .attr("y", posY - radius)
         .attr("text-anchor", "end") // align to right
         .attr("font-size", 10)
         .attr("font-weight", 500)
-        .attr("fill", "#000")
+        .attr("fill", `${colorText}`)
         .text(`${pt.name}`);
     }
     if (isSelected(selectedComponents, pt.id, "water-pressure")) {
       ptGroup
         .append("text")
-        .attr("x", posX + 190)
-        .attr("y", posY)
+        .attr("x", posX + width / 2) // right edge minus padding
+        .attr("y", posY - height / 7) // top edge plus padding
         .attr("text-anchor", "middle")
         .attr("font-size", 10)
         .attr("font-weight", 500)
-        .attr("fill", "#000")
+        .attr("fill", `${colorText}`)
         .text(`${pt.name}`);
     }
 

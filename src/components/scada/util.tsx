@@ -87,7 +87,8 @@ export function drawGrid(
   const gridGroup = svg.select(".grid-layer");
   gridGroup.selectAll("*").remove(); // clear old grid
 
-  const mainGridLineWidth = isModify ? 1 : 0.7;
+  const mainGridLineWidth = isModify ? 1 : 0; //0.05;
+  const subGridLineWidth = isModify ? 0.5 : 0; //0.03;
   const mainGridLineColor = `#cccccc3f`; //isModify ? `#ccc` : `#cccccc3f`;
   const subGridLineColor = `#e9e9e955`; //isModify ? `#e9e9e9` : `#e9e9e955`;
 
@@ -104,7 +105,7 @@ export function drawGrid(
         .attr("x2", x)
         .attr("y2", h)
         .attr("stroke", `${subGridLineColor}`)
-        .attr("stroke-width", 0.5);
+        .attr("stroke-width", subGridLineWidth);
 
       gridGroup
         .append("line")
@@ -113,7 +114,7 @@ export function drawGrid(
         .attr("x2", w)
         .attr("y2", y)
         .attr("stroke", `${subGridLineColor}`)
-        .attr("stroke-width", 0.5);
+        .attr("stroke-width", subGridLineWidth);
     }
   }
 

@@ -39,7 +39,6 @@
     {
       "id": "pressure-01",
       "name": "Pressure 01",
-      "value": 12.5,
       "size": 140,
       "points": [
         {
@@ -57,7 +56,6 @@
     {
       "id": "pressure-02",
       "name": "Pressure 02",
-      "value": 125,
       "size": 140,
       "points": [
         {
@@ -75,7 +73,6 @@
     {
       "id": "pressure-03",
       "name": "Pressure 03",
-      "value": 137.5,
       "size": 140,
       "points": [
         {
@@ -93,7 +90,6 @@
     {
       "id": "pressure-04",
       "name": "Pressure 04",
-      "value": 87.5,
       "size": 140,
       "points": [
         {
@@ -113,11 +109,10 @@
     {
       "name": "Tank 01",
       "id": "tank01",
-      "value": "75",
       "points": [
         {
           "id": "tank01_point01",
-          "x": 12.113148320667177,
+          "x": 13.113148320667177,
           "y": 9.875486896922355
         }
       ]
@@ -125,11 +120,10 @@
     {
       "name": "Tank 02",
       "id": "tank02",
-      "value": "10",
       "points": [
         {
           "id": "tank02_point01",
-          "x": 12.125450458396406,
+          "x": 13.125450458396406,
           "y": 42.80226801191366
         }
       ]
@@ -137,11 +131,10 @@
     {
       "name": "Tank 03",
       "id": "tank03",
-      "value": "40",
       "points": [
         {
           "id": "tank03_point01",
-          "x": 12.046710803799774,
+          "x": 13.046710803799774,
           "y": 77.28458694548539
         }
       ]
@@ -646,7 +639,6 @@
       ]
     }
   ],
-
   "pipe": [
     {
       "id": "pipe1",
