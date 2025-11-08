@@ -370,7 +370,7 @@ export function drawWaterMeter(
       .attr("fill", `${colorText}`)
       .style("font-size", `${8}px`)
       .style("font-weight", 600)
-      .text(meter.id);
+      .text(meter.name ?? "--");
 
     if (!isModify) {
       meterGroup
@@ -572,7 +572,7 @@ export function drawWaterTank(
         .style("font-weight", 600)
         .text(`${tank.name}`);
 
-  /*     tankGroup
+      /*     tankGroup
         .append("text")
         .attr("x", (posX + radius) * 1.45)
         .attr("y", posY - radius + 66) // slightly above the meter

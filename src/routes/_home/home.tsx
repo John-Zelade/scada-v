@@ -25,7 +25,7 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { PanelComponents } from "@/components/panel-components";
 import { PanelComponentDetails } from "@/components/panel-details";
-import type { ShapesType } from "@/components/types/map";
+import type { SelectedComponent, ShapesType } from "@/components/types/map";
 
 import Elements from "../../lib/mock-data/elements.json";
 
@@ -37,6 +37,9 @@ export function home() {
   const [isModify, setIsModify] = useState(false);
   const [showElements, setshowElements] = useState(false);
   const [showElementInfos, setshowElementInfos] = useState(false);
+  const [selectedComponents, setSelectedComponents] = useState<
+    SelectedComponent[]
+  >([]);
 
   /* Store Elements that has changes */
   const [pendingElements, setPendingElements] = useState<ShapesType[]>([]);
@@ -80,10 +83,7 @@ export function home() {
 
   return (
     <>
-      <main
-        className="h-screen "
-  
-      >
+      <main className="h-screen ">
         {isModify && (
           <>
             <div
@@ -178,24 +178,6 @@ export function home() {
                       <TooltipContent>Zoom Out</TooltipContent>
                     </Tooltip>
 
-                    {/* <Tooltip>
-                    <TooltipTrigger className="cursor-pointer" asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Export Layout</TooltipContent>
-                  </Tooltip>
-
-                  <Tooltip>
-                    <TooltipTrigger className="cursor-pointer" asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Upload className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Import Layout</TooltipContent>
-                  </Tooltip> */}
-
                     <Tooltip>
                       <TooltipTrigger className="cursor-pointer" asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -213,7 +195,10 @@ export function home() {
                       <Button
                         variant={"ghost"}
                         className={`h-8 w-8`}
-                        onClick={() => setIsModify(!isModify)}
+                        onClick={() => {
+                          setIsModify(!isModify);
+                          setSelectedComponents([]);
+                        }}
                       >
                         {isModify ? (
                           <X className="h-4 w-4" />
@@ -237,6 +222,8 @@ export function home() {
                   setModifiedShapes={setModifiedElements}
                   elements={elements}
                   setElements={setElements}
+                  selectedComponents={selectedComponents}
+                  setSelectedComponents={setSelectedComponents}
                   /* for pending elements */
 
                   pendingElements={pendingElements}

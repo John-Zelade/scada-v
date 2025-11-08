@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import { generateRandomWaterData } from "@/lib/mock-data/mock-data";
-import { KeyCntrls } from "./key-ctrls";
+import { enableBoxSelection, KeyCntrls } from "./key-ctrls";
 import {
   drawPipe,
   drawPressureGauge,
@@ -9,13 +9,9 @@ import {
   drawWaterSupply,
   drawWaterTank,
 } from "./components/scada-components";
-import {
-  water_meters,
-  water_supply,
-  Elements,
-} from "@/lib/mock-data/mock-data";
+
 import { drawGrid } from "./util";
-import { handleMouseDown, handleMouseMove, handleMouseUp } from "./util";
+
 import type {
   WaterMeter,
   SelectedComponent,
@@ -30,6 +26,10 @@ interface SCADAMapProps {
 
   elements: ShapesType;
   setElements: React.Dispatch<React.SetStateAction<ShapesType>>;
+  selectedComponents: SelectedComponent[];
+  setSelectedComponents: React.Dispatch<
+    React.SetStateAction<SelectedComponent[]>
+  >;
 
   pendingElements: ShapesType[];
   setPendingElements: React.Dispatch<React.SetStateAction<ShapesType[]>>;
@@ -48,6 +48,8 @@ export function SCADAMap({
 
   elements,
   setElements,
+  selectedComponents,
+  setSelectedComponents,
 
   pendingElements,
   setPendingElements,
@@ -112,15 +114,8 @@ export function SCADAMap({
 
   const svgRef = useRef<SVGSVGElement>(null);
   const [dimensions, setDimensions] = useState({ width, height });
-
-  const [isDragging, setIsDragging] = useState(false);
-  const dragOffset = useRef({ x: 0, y: 0 });
   const [zoomScale, setZoomScale] = useState(1);
 
-  const [selectedTool, setSelectedTool] = useState<ToolType>(null);
-  const [selectedComponents, setSelectedComponents] = useState<
-    SelectedComponent[]
-  >([]);
   //console.log(`selectedComponents`, selectedComponents);
   //console.log(`elements:`, elements);
 
@@ -201,6 +196,24 @@ export function SCADAMap({
 
     return () => keyControls.destroy();
   }, [selectedComponents, isModify]);
+
+  useEffect(() => {
+    if (!svgRef.current) return;
+
+    const svg = d3.select(svgRef.current);
+
+    // Enable only when isModify is true
+    if (isModify) {
+      enableBoxSelection(
+        svg as d3.Selection<SVGSVGElement, unknown, null, undefined>,
+        elements,
+        setSelectedComponents
+      );
+    } else {
+      // Remove all event listeners if disabled
+      svg.on(".mousedown", null).on(".mousemove", null).on(".mouseup", null);
+    }
+  }, [elements, isModify]);
 
   /* ====================================================================================
                                     Draw Circle Elements

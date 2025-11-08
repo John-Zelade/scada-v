@@ -1,4 +1,5 @@
 import type { SelectedComponent, ShapesType } from "../types/map";
+import * as d3 from "d3";
 
 export class KeyCntrls {
   private getSelected: () => SelectedComponent[];
@@ -168,7 +169,17 @@ export class KeyCntrls {
         }
       );
 
-      this.updateSelected?.(all);
+      //Check if everything is already selected
+      const isAllSelected =
+        this.getSelected() &&
+        all.length > 0 &&
+        all.every((a) =>
+          this.getSelected().some(
+            (b) => b.type === a.type && b.data.id === a.data.id
+          )
+        );
+
+      this.updateSelected?.(isAllSelected ? [] : all);
       return prev;
     });
   }
@@ -213,4 +224,142 @@ export class KeyCntrls {
     window.removeEventListener("keyup", this.handleKeyUp);
     if (this.animationFrame) cancelAnimationFrame(this.animationFrame);
   }
+}
+
+export function enableBoxSelection(
+  svg: d3.Selection<SVGSVGElement, unknown, null, undefined>,
+  elements: ShapesType,
+  setSelectedComponents: React.Dispatch<
+    React.SetStateAction<SelectedComponent[]>
+  >
+) {
+  let startX = 0;
+  let startY = 0;
+  let selectionBox: d3.Selection<
+    SVGRectElement,
+    unknown,
+    null,
+    undefined
+  > | null = null;
+  let isDragging = false;
+
+  const svgNode = svg.node();
+
+  const clearSelection = () => {
+    if (selectionBox) {
+      selectionBox.remove();
+      selectionBox = null;
+    }
+    isDragging = false;
+    document.body.style.userSelect = "auto";
+  };
+
+  svg
+    .on("mousedown", (event: MouseEvent) => {
+      if (event.button !== 0) return; // only left-click
+
+      event.preventDefault();
+      document.body.style.userSelect = "none";
+      isDragging = true;
+
+      const rect = svgNode?.getBoundingClientRect();
+      startX = event.clientX - (rect?.left ?? 0);
+      startY = event.clientY - (rect?.top ?? 0);
+      // create a visual selection rectangle
+      selectionBox = svg
+        .append("rect")
+        .attr("x", startX)
+        .attr("y", startY)
+        .attr("width", 0)
+        .attr("height", 0)
+        .attr("fill", "rgba(0, 150, 255, 0.2)")
+        .attr("stroke", "#0096ff")
+        .attr("stroke-dasharray", "4 2");
+    })
+    .on("mousemove", (event: MouseEvent) => {
+      if (!isDragging || !selectionBox) return;
+
+      const rect = svgNode?.getBoundingClientRect();
+      const currentX = event.clientX - (rect?.left ?? 0);
+      const currentY = event.clientY - (rect?.top ?? 0);
+
+      const rectX = Math.min(startX, currentX);
+      const rectY = Math.min(startY, currentY);
+      const width = Math.abs(currentX - startX);
+      const height = Math.abs(currentY - startY);
+
+      selectionBox
+        .attr("x", rectX)
+        .attr("y", rectY)
+        .attr("width", width)
+        .attr("height", height);
+    })
+    .on("mouseup", (event: MouseEvent) => {
+      if (!isDragging || !selectionBox) return;
+      isDragging = false;
+
+      const box = selectionBox.node()?.getBBox();
+      if (!box) {
+        clearSelection();
+        return;
+      }
+
+      const svgWidth = svgNode?.clientWidth || 0;
+      const svgHeight = svgNode?.clientHeight || 0;
+
+      // detect elements inside box
+      const selected: SelectedComponent[] = [];
+
+      Object.entries(elements).forEach(([type, items]) => {
+        if (!Array.isArray(items)) return;
+
+        items.forEach((item: any) => {
+          const { x, y, points } = item;
+
+          if (points && Array.isArray(points)) {
+            // For pipes (with multiple points)
+
+            const inside = points.some((p) => {
+              const px = (p.x / 100) * svgWidth;
+              const py = (p.y / 100) * svgHeight;
+
+              return (
+                px >= box.x &&
+                px <= box.x + box.width &&
+                py >= box.y &&
+                py <= box.y + box.height
+              );
+            });
+
+            if (inside)
+              selected.push({
+                type: type as SelectedComponent["type"],
+                data: item,
+              });
+          } else if (x !== undefined && y !== undefined) {
+            // For elements with single x/y (also in percent)
+            const px = (x / 100) * svgWidth;
+            const py = (y / 100) * svgHeight;
+
+            if (
+              px >= box.x &&
+              px <= box.x + box.width &&
+              py >= box.y &&
+              py <= box.y + box.height
+            ) {
+              selected.push({
+                type: type as SelectedComponent["type"],
+                data: item,
+              });
+            }
+          }
+        });
+      });
+
+      setSelectedComponents(selected);
+
+      // remove rectangle
+      selectionBox.remove();
+      selectionBox = null;
+    });
 }
