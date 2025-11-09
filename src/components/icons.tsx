@@ -3,7 +3,7 @@ import React from "react";
 import type { GaugeProps, IconProps } from "./types/icons";
 
 export const WaterTankIcon: React.FC<IconProps> = ({
-  value = 0,
+  value = "",
   className = "",
   width = 4,
   height = 20,
@@ -201,11 +201,13 @@ export const WaterTankIcon: React.FC<IconProps> = ({
           className="absolute z-10 text-[14px] font-semibold text-[#222]"
           style={{
             fontFamily: "Consolas, monospace",
-            bottom: value > 90 ? "50%" : `${value + 5}%`,
+            bottom: Number(value) > 90 ? "50%" : `${Number(value) + 5}%`,
             transform: "translateY(50%)",
           }}
         >
-          {`${value.toFixed(2)}%`}
+          {value !== "" && !isNaN(Number(value))
+            ? `${Number(value).toFixed(2)}%`
+            : ""}
         </div>
       </div>
     </div>

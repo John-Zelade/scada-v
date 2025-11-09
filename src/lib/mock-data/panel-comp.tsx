@@ -33,7 +33,7 @@ export const categories = [
     name: "SCADA Water",
     key: "scada-water",
     items: [
-      { name: "Tank", icon: <WaterTankIcon value={50} className="h-4 w-7" /> },
+      { name: "Tank", icon: <WaterTankIcon value={""} className="h-3 w-8" /> },
       { name: "Pressure", icon: <PressureTransmitterGauge value={120} /> },
     ],
   },

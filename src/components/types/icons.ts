@@ -6,7 +6,7 @@ export type GaugeProps = {
 };
 
 export type IconProps = {
-  value: number;
+  value: string;
   className?: string;
   width?: number | string;
   height?: number | string;

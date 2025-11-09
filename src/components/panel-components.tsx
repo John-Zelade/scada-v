@@ -116,14 +116,14 @@ export function PanelComponents({
               </div>
 
               {expanded[category.key as keyof typeof expanded] && (
-                <div className="ml-4 mt-1 flex gap-2">
+                <div className="ml-4 mt-1 flex gap-1">
                   <TooltipProvider>
                     {category.items.map((item) => (
                       <Tooltip key={item.name}>
                         <TooltipTrigger className="cursor-pointer" asChild>
                           <div
                             key={item.name}
-                            className="items-center gap-2 rounded-md text-gray-600 p-2 hover:bg-muted cursor-pointer transition text-xs font-medium"
+                            className="items-center gap-1 rounded-md text-gray-600 p-2 hover:bg-muted cursor-pointer transition text-xs font-medium"
                           >
                             {item.icon}
                           </div>

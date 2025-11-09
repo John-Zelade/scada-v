@@ -35,7 +35,10 @@ export class KeyCntrls {
     // Select All (Ctrl + A or Cmd + A)
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "a") {
       e.preventDefault(); // prevent browser "select all" text
-      this.selectAll();
+      if (this.canMove()) {
+        //check if modify allowed
+        this.selectAll();
+      }
       return;
     }
 

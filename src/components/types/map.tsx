@@ -55,7 +55,9 @@ export interface ShapeItem {
   points: Point[];
   value?: string;
   name?: string;
-  size?: number;
+  size?: number; //radius for circles or general scaling
+  width?: number; //element width
+  height?: number; //element height
 }
 
 export interface ShapesType {

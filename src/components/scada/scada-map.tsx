@@ -61,8 +61,10 @@ export function SCADAMap({
 }: SCADAMapProps) {
   const waterRef = useRef<any>(null);
 
-  useEffect(() => {
-    const countTime = 5_000; //adjust interval (5 seconds)
+  /*  useEffect(() => {
+    if (isModify) return;
+
+    const countTime = 2_000; //adjust interval (5 seconds)
     const water = generateRandomWaterData(countTime, "water-meter");
     const tank = generateRandomWaterData(countTime, "water-tank");
     const pressure = generateRandomWaterData(countTime, "water-pressure");
@@ -110,7 +112,7 @@ export function SCADAMap({
       pressure.stop();
       tank.stop();
     };
-  }, []);
+  }, []); */
 
   const svgRef = useRef<SVGSVGElement>(null);
   const [dimensions, setDimensions] = useState({ width, height });
@@ -181,7 +183,7 @@ export function SCADAMap({
     svg.call(isModify ? enabledZoomOut : zoom);
   }, [isModify]);
 
-  /* Move element using arrow key */
+  /* Move element using keyboard keys*/
   useEffect(() => {
     const moveStep = 1 / zoomScale;
     //console.log(`moveStep`, moveStep);
@@ -199,7 +201,6 @@ export function SCADAMap({
 
   useEffect(() => {
     if (!svgRef.current) return;
-
     const svg = d3.select(svgRef.current);
 
     // Enable only when isModify is true
@@ -237,7 +238,7 @@ export function SCADAMap({
       selectedComponents,
       setSelectedComponents
     );
-  }, [elements, dimensions, isModify, selectedComponents]);
+  }, [elements.circle, dimensions, isModify, selectedComponents]);
 
   /* ====================================================================================
                                     Draw Pipe Elements
@@ -264,7 +265,7 @@ export function SCADAMap({
       selectedComponents,
       setSelectedComponents
     );
-  }, [elements, dimensions, isModify, selectedComponents]);
+  }, [elements.pipe, dimensions, isModify, selectedComponents]);
 
   /* ====================================================================================
                                     Draw Meter Elements
@@ -287,7 +288,7 @@ export function SCADAMap({
       selectedComponents,
       setSelectedComponents
     );
-  }, [elements, dimensions, isModify, selectedComponents]);
+  }, [elements["water-meters"], dimensions, isModify, selectedComponents]);
 
   /* ====================================================================================
                                     Draw Water Supply Elements
@@ -310,7 +311,7 @@ export function SCADAMap({
       selectedComponents,
       setSelectedComponents
     );
-  }, [elements, dimensions, isModify, selectedComponents]);
+  }, [elements["water-supply"], dimensions, isModify, selectedComponents]);
 
   /* ====================================================================================
                                     Draw Water Tanks Element
@@ -333,7 +334,7 @@ export function SCADAMap({
       selectedComponents,
       setSelectedComponents
     );
-  }, [elements, dimensions, isModify, selectedComponents]);
+  }, [elements["water-tanks"], dimensions, isModify, selectedComponents]);
 
   /* ====================================================================================
                            Draw Water Pressure Transmitter Element
@@ -356,7 +357,7 @@ export function SCADAMap({
       selectedComponents,
       setSelectedComponents
     );
-  }, [elements, dimensions, isModify, selectedComponents]);
+  }, [elements["water-pressure"], dimensions, isModify, selectedComponents]);
 
   // Add new pipe dynamically
   const addPipe = () => {

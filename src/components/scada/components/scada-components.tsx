@@ -13,7 +13,7 @@ import { PressureTransmitterGauge, WaterTankIcon } from "@/components/icons";
 
 import BX9 from "../../../assets/B39-water-meter.png";
 import WaterSupplyImg from "../../../assets/water_supply.png";
-import { toggleSelection } from "../util";
+import { drawResizeHandles, toggleSelection } from "../util";
 import { isSelected } from "../helper";
 import { createDragHandlers } from "../util";
 // Each pipe will track its own animation frame
@@ -325,6 +325,7 @@ export function drawWaterMeter(
   const colorText = "#ffff";
   // Remove existing meters
   svg.selectAll(".water-meter").remove();
+
   // Ensure we have a map layer
   const g = svg.select(".zoom-layer");
   if (g.empty()) return;
@@ -338,18 +339,18 @@ export function drawWaterMeter(
     const posX = (meter.points[0].x / 100) * svgWidth;
     const posY = (meter.points[0].y / 100) * svgHeight;
 
-    const radius = Math.min(svgWidth, svgHeight) * 0.028;
+    const baseSize = Math.min(svgWidth, svgHeight) * 0.028;
 
-    const circle =
+    const _meter =
       //use this for image
       meterGroup
         .append("image")
         .data([meter])
         .attr("href", BX9) // <-- your image path
-        .attr("x", posX - radius)
-        .attr("y", posY - radius)
-        .attr("width", radius * 2)
-        .attr("height", radius * 2)
+        .attr("x", posX - baseSize)
+        .attr("y", posY - baseSize)
+        .attr("width", baseSize * 2)
+        .attr("height", baseSize * 2)
         .style("opacity", () =>
           isSelected(selectedComponents, meter.id, "water-meters") ? 0.6 : 1
         )
@@ -365,7 +366,7 @@ export function drawWaterMeter(
     meterGroup
       .append("text")
       .attr("x", posX)
-      .attr("y", posY - radius) // slightly above the meter
+      .attr("y", posY - baseSize) // slightly above the meter
       .attr("text-anchor", "middle")
       .attr("fill", `${colorText}`)
       .style("font-size", `${8}px`)
@@ -382,6 +383,30 @@ export function drawWaterMeter(
         .style("font-size", `${4}px`)
         .style("font-weight", 600)
         .text(`${String(meter.value ?? 0)}m³`);
+    }
+
+    // Draw resize handles if selected
+    const _isElementSelected = isSelected(
+      selectedComponents,
+      meter.id,
+      "water-meters"
+    );
+    if (_isElementSelected) {
+      if (_isElementSelected) {
+        drawResizeHandles({
+          svg,
+          svgGroup: meterGroup,
+          posX: posX - (baseSize * 15.5) / 15.5,
+          posY: posY - (baseSize * 8.5) / 8.5,
+          width: baseSize * 2,
+          height: baseSize * 2,
+          selectedComponents,
+          elementId: meter.id,
+          elementType: "water-meters",
+          setElements,
+          element: meter,
+        });
+      }
     }
 
     if (isModify) {
@@ -406,7 +431,7 @@ export function drawWaterMeter(
         svgHeight
       );
 
-      circle.call(drag);
+      _meter.call(drag);
     }
   });
 }
@@ -444,18 +469,18 @@ export function drawWaterSupply(
     const posX = (supply.points[0].x / 100) * svgWidth;
     const posY = (supply.points[0].y / 100) * svgHeight;
 
-    const radius = Math.min(svgWidth, svgHeight) * 0.032;
+    const baseSize = Math.min(svgWidth, svgHeight) * 0.032;
 
-    const circle =
+    const _supply =
       //use this for image
       supplyGroup
         .append("image")
         .data([supply])
         .attr("href", WaterSupplyImg)
-        .attr("x", posX - radius)
-        .attr("y", posY - radius)
-        .attr("width", radius * 3.5)
-        .attr("height", radius * 2)
+        .attr("x", posX - baseSize)
+        .attr("y", posY - baseSize)
+        .attr("width", baseSize * 3.5)
+        .attr("height", baseSize * 2)
         .style("opacity", () =>
           isSelected(selectedComponents, supply.id, "water-supply") ? 0.6 : 1
         )
@@ -466,6 +491,30 @@ export function drawWaterSupply(
           if (!isModify) return;
           toggleSelection(supply, "water-supply", setSelectedComponents);
         });
+
+    // Draw resize handles if selected
+    const _isElementSelected = isSelected(
+      selectedComponents,
+      supply.id,
+      "water-supply"
+    );
+    if (_isElementSelected) {
+      if (_isElementSelected) {
+        drawResizeHandles({
+          svg,
+          svgGroup: supplyGroup,
+          posX: posX - (baseSize * 15.5) / 15.5,
+          posY: posY - (baseSize * 8.5) / 8.5,
+          width: baseSize * 3.5,
+          height: baseSize * 2,
+          selectedComponents,
+          elementId: supply.id,
+          elementType: "water-supply",
+          setElements,
+          element: supply,
+        });
+      }
+    }
 
     if (isModify) {
       const drag = createDragHandlers<SVGImageElement, ShapeItem>(
@@ -489,7 +538,7 @@ export function drawWaterSupply(
         svgWidth,
         svgHeight
       );
-      circle.call(drag);
+      _supply.call(drag);
     }
   });
 }
@@ -529,12 +578,12 @@ export function drawWaterTank(
     const posX = (tank.points[0].x / 100) * svgWidth;
     const posY = (tank.points[0].y / 100) * svgHeight;
 
-    const radius = Math.min(svgWidth, svgHeight) * 0.025;
+    const baseSize = Math.min(svgWidth, svgHeight) * 0.025;
 
     const svgMarkup = ReactDOMServer.renderToStaticMarkup(
       <WaterTankIcon
-        value={isModify ? 0 : Number(tank.value) || 0}
-        height={radius * 8}
+        value={isModify ? "" : String(tank.value) || "0"}
+        height={baseSize * 8}
       />
     );
 
@@ -543,12 +592,12 @@ export function drawWaterTank(
       tankGroup
         .append("foreignObject")
         .data([tank])
-        .attr("x", posX - radius)
-        .attr("y", posY - radius)
+        .attr("x", posX - baseSize)
+        .attr("y", posY - baseSize)
 
         .html(svgMarkup)
-        .attr("width", radius * 15.5)
-        .attr("height", radius * 8.5)
+        .attr("width", baseSize * 15.5)
+        .attr("height", baseSize * 8.5)
         .style("opacity", () =>
           isSelected(selectedComponents, tank.id, "water-tanks") ? 0.6 : 1
         )
@@ -564,8 +613,8 @@ export function drawWaterTank(
     if (!isModify) {
       tankGroup
         .append("text")
-        .attr("x", posX + radius)
-        .attr("y", posY - radius - 1) // slightly above the meter
+        .attr("x", posX + baseSize)
+        .attr("y", posY - baseSize - 1) // slightly above the meter
         .attr("text-anchor", "middle")
         .attr("fill", `#ffff`)
         .style("font-size", `${10}px`)
@@ -574,8 +623,8 @@ export function drawWaterTank(
 
       /*     tankGroup
         .append("text")
-        .attr("x", (posX + radius) * 1.45)
-        .attr("y", posY - radius + 66) // slightly above the meter
+        .attr("x", (posX + baseSize) * 1.45)
+        .attr("y", posY - baseSize + 66) // slightly above the meter
         .attr("text-anchor", "middle")
         .attr("fill", `${colorText}`)
         .style("font-size", `${10}px`)
@@ -584,8 +633,8 @@ export function drawWaterTank(
 
       tankGroup
         .append("text")
-        .attr("x", (posX + radius) * 1.45)
-        .attr("y", posY - radius + 75) // slightly above the meter
+        .attr("x", (posX + baseSize) * 1.45)
+        .attr("y", posY - baseSize + 75) // slightly above the meter
         .attr("text-anchor", "middle")
         .attr("fill", `${colorText}`)
         .style("font-size", `${10}px`)
@@ -602,6 +651,30 @@ export function drawWaterTank(
         .attr("font-weight", 500)
         .attr("fill", `${colorText}`)
         .text(`${tank.name}`);
+    }
+
+    // Draw resize handles if selected
+    const _isElementSelected = isSelected(
+      selectedComponents,
+      tank.id,
+      "water-tanks"
+    );
+    if (_isElementSelected) {
+      if (_isElementSelected) {
+        drawResizeHandles({
+          svg,
+          svgGroup: tankGroup,
+          posX: posX - (baseSize * 15.5) / 15.5,
+          posY: posY - (baseSize * 8.5) / 8.5,
+          width: baseSize * 15.5,
+          height: baseSize * 8.5,
+          selectedComponents,
+          elementId: tank.id,
+          elementType: "water-tanks",
+          setElements,
+          element: tank,
+        });
+      }
     }
 
     if (isModify) {
@@ -666,12 +739,12 @@ export function drawPressureGauge(
     const posX = (pt.points[0].x / 100) * svgWidth;
     const posY = (pt.points[0].y / 100) * svgHeight;
 
-    const radius = Math.min(svgWidth, svgHeight) * 0.025;
+    const baseSize = Math.min(svgWidth, svgHeight) * 0.025;
 
     const svgMarkup = ReactDOMServer.renderToStaticMarkup(
       <PressureTransmitterGauge
         value={isModify ? 0 : Number(pt.value) || 0}
-        size={radius * 8}
+        size={pt?.width || 10}
       />
     );
 
@@ -680,12 +753,12 @@ export function drawPressureGauge(
       ptGroup
         .append("foreignObject")
         .data([pt])
-        .attr("x", posX - radius)
-        .attr("y", posY - radius)
+        .attr("x", posX)
+        .attr("y", posY)
 
         .html(svgMarkup)
-        .attr("width", radius * 8)
-        .attr("height", radius * 8)
+        .attr("width", pt?.width || 10)
+        .attr("height", pt?.height || 10)
         .style("opacity", () =>
           isSelected(selectedComponents, pt.id, "water-pressure") ? 0.6 : 1
         )
@@ -701,26 +774,37 @@ export function drawPressureGauge(
     const ptDiv = foreignObj.querySelector(".pressure-gauge") as HTMLDivElement;
     const { width, height } = ptDiv.getBoundingClientRect();
 
-    /* const needle = ptGroup.select("polygon");
-    needle
-      .transition()
-      .duration(500)
-      .attrTween("transform", function (this: any) {
-        const previousAngle = this.__prevAngle || 0;
-        const currentAngle = -180 + (Number(pt.value) / 240) * 360;
-        const interpolate = d3.interpolate(previousAngle, currentAngle);
-        this.__prevAngle = currentAngle; // store for next update
-        return (t: number) => `rotate(${interpolate(t)} 50 50)`;
-      }); */
+    //Draw resize handles if selected
+    const _isElementSelected = isSelected(
+      selectedComponents,
+      pt.id,
+      "water-pressure"
+    );
+
+    if (_isElementSelected) {
+      drawResizeHandles({
+        svg,
+        svgGroup: ptGroup,
+        posX: posX - (pt?.width || 10) / (pt?.width || 10),
+        posY: posY - (pt?.height || 10) / (pt?.height || 10),
+        width: pt?.width || 10,
+        height: pt?.height || 10,
+        selectedComponents,
+        elementId: pt.id,
+        elementType: "water-pressure",
+        setElements,
+        element: pt,
+      });
+    }
 
     // Meter label
     if (!isModify) {
       // Top-right label (pt name)
       ptGroup
         .append("text")
-        .attr("x", posX + radius + 15)
-        .attr("y", posY - radius)
-        .attr("text-anchor", "end") // align to right
+        .attr("x", posX + width / 2) // right edge minus padding
+        .attr("y", posY - 4) // top edge plus padding
+        .attr("text-anchor", "middle")
         .attr("font-size", 10)
         .attr("font-weight", 500)
         .attr("fill", `${colorText}`)
@@ -730,7 +814,7 @@ export function drawPressureGauge(
       ptGroup
         .append("text")
         .attr("x", posX + width / 2) // right edge minus padding
-        .attr("y", posY - height / 7) // top edge plus padding
+        .attr("y", posY - 5) // top edge plus padding
         .attr("text-anchor", "middle")
         .attr("font-size", 10)
         .attr("font-weight", 500)

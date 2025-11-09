@@ -4,10 +4,15 @@ import type {
   PipePoint,
   Pipes,
   SelectedComponent,
+  ShapeItem,
+  ShapesType,
   WaterMeter,
   WaterSupply,
 } from "../types/map";
 import * as d3 from "d3";
+import type { ResizeHandleOptions } from "../types/element";
+import { isSelected } from "./helper";
+import { el } from "date-fns/locale";
 
 interface PanelPos {
   x: number;
@@ -175,30 +180,138 @@ export const createDragHandlers = <
   return d3
     .drag<ElementType, T>()
     .on("start", (event, d) => {
-      d3.select(event.sourceEvent.target).style("opacity", 0.6);
+      const pos = getPosition(d);
+
+      const node = event.sourceEvent.target as SVGElement;
+      const svgRect = svg.node()?.getBoundingClientRect();
+      if (!svgRect) return;
+
+      // Store initial pointer offset in pixels
+      const pointerX = event.sourceEvent.clientX - svgRect.left;
+      const pointerY = event.sourceEvent.clientY - svgRect.top;
+
+      // account for zoom transform
+      const transform = d3.zoomTransform(svg.node()!);
+
+      (d as any)._dragOffset = {
+        x: pointerX - transform.x - (pos.x / 100) * svgWidth * transform.k,
+        y: pointerY - transform.y - (pos.y / 100) * svgHeight * transform.k,
+      };
+
+      d3.select(node).style("opacity", 0.6);
     })
     .on("drag", (event, d) => {
       const node = svg.node();
       if (!node) return;
 
-      const transform = d3.zoomTransform(node);
-      const [xPx, yPx] = transform.invert(d3.pointer(event, node));
+      const pointer = d3.pointer(event, node);
+
+      const offset = (d as any)._dragOffset || { x: 0, y: 0 };
+      const transform = d3.zoomTransform(svg.node()!);
+
+      // Apply inverse of current zoom
+      const xPx = (pointer[0] - transform.x - offset.x) / transform.k;
+      const yPx = (pointer[1] - transform.y - offset.y) / transform.k;
 
       const x = (xPx / svgWidth) * 100;
       const y = (yPx / svgHeight) * 100;
 
-      // special handling if type is pipe
-      let updated: T;
-
-      updated = updatePosition(d, x, y);
+      const updated = updatePosition(d, x, y);
 
       setItem(d.id, updated);
-      // Keep opacity at 0.6 during drag
-      //d3.select(event.sourceEvent.target).style("opacity", 0.6);
     })
-    .on("end", (event) => {
-      //d3.select(event.sourceEvent.target).style("opacity", 0.6);
+    .on("end", (event, d) => {
+      delete (d as any)._dragOffset;
     });
+};
+
+export const drawResizeHandles = ({
+  svg,
+  svgGroup,
+  posX,
+  posY,
+  width,
+  height,
+  selectedComponents,
+  elementId,
+  elementType,
+  handleSize = 6,
+  className = "resize-handle",
+  borderColor = "#007bff",
+  borderWidth = 0.5,
+  setElements,
+  element,
+}: ResizeHandleOptions & {
+  svg: d3.Selection<SVGSVGElement, unknown, null, undefined>;
+  setElements: React.Dispatch<React.SetStateAction<ShapesType>>;
+  element: ShapeItem;
+}) => {
+  const _isSelected = isSelected(selectedComponents, elementId, elementType);
+
+  if (!_isSelected) return;
+
+  // --- Draw selection border ---
+  svgGroup.selectAll<SVGRectElement, unknown>(".selection-border").remove();
+  svgGroup.selectAll<SVGRectElement, unknown>(".resize-handle").remove();
+
+  svgGroup
+    .append("rect")
+    .attr("class", "selection-border")
+    .attr("x", posX)
+    .attr("y", posY)
+    .attr("width", width)
+    .attr("height", height)
+    .attr("fill", "none")
+    .attr("stroke", borderColor)
+    .attr("stroke-width", borderWidth)
+    .style("pointer-events", "none"); // so it doesn't block dragging
+
+  const handleOffsets: [number, number][] = [
+    [0, 0], // top-left
+    [width / 2, 0], // top-center
+    [width, 0], // top-right
+    [0, height / 2], // middle-left
+    [width, height / 2], // middle-right
+    [0, height], // bottom-left
+    [width / 2, height], // bottom-center
+    [width, height], // bottom-right
+  ];
+
+  const handles = svgGroup
+    .selectAll<SVGRectElement, [number, number]>(`.${className}`)
+    .data(handleOffsets)
+    .join("rect")
+    .attr("class", className)
+    .attr("x", (d) => posX + d[0] - handleSize / 2)
+    .attr("y", (d) => posY + d[1] - handleSize / 2)
+    .attr("width", handleSize)
+    .attr("height", handleSize)
+    .attr("fill", "#007bff")
+    .attr("stroke", "#fff")
+    .attr("stroke-width", 1)
+    .style("cursor", "nwse-resize")
+    .style("opacity", 0.8);
+
+  // ✅ Correctly typed drag call
+  handles.call(
+    d3.drag<SVGRectElement, [number, number]>().on("drag", (event, d) => {
+      setElements((prev) => {
+        const newElements = (prev as any)[elementType].map((p: ShapeItem) => {
+          if (p.id !== element.id) return p;
+          // account for zoom transform
+          const transform = d3.zoomTransform(svg.node()!);
+          // Adjust for current zoom scale
+          const scale = transform.k || 1; // k = zoom scale
+          const newWidth = Math.max(4, (p.width || 10) + event.dx / scale);
+          const newHeight = Math.max(4, (p.height || 10) + event.dy / scale);
+
+          return { ...p, width: newWidth, height: newHeight };
+        });
+
+        return { ...prev, [elementType]: newElements };
+      });
+    })
+  );
 };
 
 /* export const GroupDragHandler = <T extends Pipes>({
