@@ -112,34 +112,40 @@ export class KeyCntrls {
           let newX = data.x;
           let newY = data.y;
 
-          switch (key) {
-            case "ArrowUp":
-              newY -= moveStep;
-              break;
-            case "ArrowDown":
-              newY += moveStep;
-              break;
-            case "ArrowLeft":
-              newX -= moveStep;
-              break;
-            case "ArrowRight":
-              newX += moveStep;
-              break;
-          }
+          const updatedPipes = (updated as any).pipe.map((pipe: any) => {
+            const selectedPointsForPipe = selected.filter(({ data }) =>
+              data.id.startsWith(pipe.id)
+            );
 
-          // Extract parent pipe ID from point ID (e.g., "pipe1-connection-pt2" → "pipe1")
-          const parentPipeId = data.id.split("-connection-pt")[0];
+            if (selectedPointsForPipe.length === 0) return pipe;
 
-          // Update that pipe’s corresponding point
-          (updated as any).pipe = (prev as any).pipe.map((pipe: any) => {
-            if (pipe.id !== parentPipeId) return pipe;
             return {
               ...pipe,
-              points: pipe.points.map((pt: any) =>
-                pt.id === data.id ? { ...pt, x: newX, y: newY } : pt
-              ),
+              points: pipe.points.map((pt: any) => {
+                const selectedPt = selectedPointsForPipe.find(
+                  ({ data }) => data.id === pt.id
+                );
+                if (!selectedPt) return pt;
+
+                // Move the selected connection point
+                switch (key) {
+                  case "ArrowUp":
+                    return { ...pt, y: pt.y - moveStep };
+                  case "ArrowDown":
+                    return { ...pt, y: pt.y + moveStep };
+                  case "ArrowLeft":
+                    return { ...pt, x: pt.x - moveStep };
+                  case "ArrowRight":
+                    return { ...pt, x: pt.x + moveStep };
+                  default:
+                    return pt;
+                }
+              }),
             };
           });
+
+          // Update that pipe’s corresponding point
+          (updated as any).pipe = updatedPipes;
 
           newSelectedComponents.push({
             type,

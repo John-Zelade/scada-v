@@ -118,7 +118,7 @@ export function SCADAMap({
   const [dimensions, setDimensions] = useState({ width, height });
   const [zoomScale, setZoomScale] = useState(1);
 
-  //console.log(`selectedComponents`, selectedComponents);
+  console.log(`selectedComponents`, selectedComponents);
   //console.log(`elements:`, elements);
 
   useEffect(() => {
